@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E1EBAB5E000000000000001A /* ElevenLabs in Frameworks */ = {isa = PBXBuildFile; productRef = E1EBAB5E000000000000002A /* ElevenLabs */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		159DB8EE2F92990100391D24 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1EBAB5E000000000000001A /* ElevenLabs in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = Couch;
 			packageProductDependencies = (
+				E1EBAB5E000000000000002A /* ElevenLabs */,
 			);
 			productName = Couch;
 			productReference = 159DB8E02F9298FF00391D24 /* Couch.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = 159DB8D72F9298FF00391D24;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E1EBAB5E000000000000003A /* XCRemoteSwiftPackageReference "elevenlabs-swift-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 159DB8E12F9298FF00391D24 /* Products */;
 			projectDirPath = "";
@@ -400,6 +409,7 @@
 				DEVELOPMENT_TEAM = 396Z7K26QX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Couch uses your microphone so you can speak with simulated patients during practice sessions. We never share your audio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -432,6 +442,7 @@
 				DEVELOPMENT_TEAM = 396Z7K26QX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Couch uses your microphone so you can speak with simulated patients during practice sessions. We never share your audio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -578,6 +589,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E1EBAB5E000000000000003A /* XCRemoteSwiftPackageReference "elevenlabs-swift-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/elevenlabs/elevenlabs-swift-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E1EBAB5E000000000000002A /* ElevenLabs */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1EBAB5E000000000000003A /* XCRemoteSwiftPackageReference "elevenlabs-swift-sdk" */;
+			productName = ElevenLabs;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 159DB8D82F9298FF00391D24 /* Project object */;
 }

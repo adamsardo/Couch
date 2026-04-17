@@ -1,0 +1,28 @@
+## macOS / Finder
+.DS_Store
+
+## Xcode
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+DerivedData/
+build/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Swift Package Manager
+.swiftpm/
+Packages/
+.build/
+
+## Local secrets (never commit)
+Couch/Secrets.plist
+Couch/Secrets.xcconfig
+.env
+.env.local
+
+## Misc
+*.swp
+*.log

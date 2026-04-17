@@ -1,39 +1,36 @@
-//
-//  CouchUITests.swift
-//  CouchUITests
-//
-//  Created by Adam Sardo on 18/4/2026.
-//
-
 import XCTest
 
+/// Smoke UI tests for the Couch onboarding entry point. We don't drive the full session
+/// because that requires live ElevenLabs / OpenAI credentials.
 final class CouchUITests: XCTestCase {
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testWelcomeScreenShowsPrimaryCTA() throws {
         let app = XCUIApplication()
         app.launch()
+        XCTAssertTrue(app.staticTexts["Practice therapy\nbefore it counts."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Start free practice"].exists)
+    }
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+    @MainActor
+    func testOnboardingAdvancesPastSafety() throws {
+        let app = XCUIApplication()
+        app.launch()
+        let startButton = app.buttons["Start free practice"]
+        XCTAssertTrue(startButton.waitForExistence(timeout: 5))
+        startButton.tap()
+        XCTAssertTrue(app.buttons["Got it"].waitForExistence(timeout: 3))
+        app.buttons["Got it"].tap()
+        // Quick profile screen now visible
+        XCTAssertTrue(app.buttons["Skip for now"].waitForExistence(timeout: 3))
     }
 
     @MainActor
     func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {
             XCUIApplication().launch()
         }
