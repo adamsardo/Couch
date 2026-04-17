@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// Routes between Onboarding and Home based on whether the user has completed onboarding.
+/// Routes between Onboarding and the tabbed home shell.
 struct AppRoot: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
@@ -9,7 +9,7 @@ struct AppRoot: View {
     var body: some View {
         Group {
             if let profile = profiles.first, profile.onboardedAt != nil {
-                HomeView(profile: profile)
+                RootTabView(profile: profile)
             } else {
                 OnboardingFlow()
             }

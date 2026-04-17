@@ -1,25 +1,24 @@
 import SwiftUI
 
 struct MicrophonePermissionView: View {
-    @Bindable var state: OnboardingState
+    let state: OnboardingState
     var onComplete: () -> Void
 
     @State private var isRequesting = false
 
     var body: some View {
         VStack(spacing: CouchTheme.Spacing.lg) {
-            VStack(spacing: CouchTheme.Spacing.md) {
-                Image(systemName: "mic.fill")
-                    .font(.system(size: 56))
-                    .foregroundStyle(CouchTheme.primary)
-                Text("Voice makes it real")
-                    .font(CouchTheme.Typography.title)
-                    .foregroundStyle(CouchTheme.textPrimary)
-                Text("We'll ask iOS for microphone access on the next tap. Audio stays on your device for the live conversation. You can switch to text any time.")
+            hero
+
+            VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
+                HighlightedText(
+                    fullText: "Your voice makes it real.",
+                    highlight: "voice",
+                    font: CouchTheme.Typography.title
+                )
+                Text("We'll ask iOS for microphone access on the next tap. Audio stays on your device during the live conversation — switch to text any time.")
                     .font(CouchTheme.Typography.body)
                     .foregroundStyle(CouchTheme.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, CouchTheme.Spacing.md)
             }
 
             Spacer()
@@ -27,7 +26,7 @@ struct MicrophonePermissionView: View {
             VStack(spacing: CouchTheme.Spacing.sm) {
                 PrimaryButton(
                     title: state.micPermission == .granted ? "Continue" : "Allow microphone",
-                    systemImage: state.micPermission == .granted ? "checkmark" : "mic",
+                    systemImage: state.micPermission == .granted ? "checkmark" : "mic.fill",
                     isLoading: isRequesting
                 ) {
                     Task { await handlePrimary() }
@@ -37,14 +36,27 @@ struct MicrophonePermissionView: View {
                     onComplete()
                 }
                 .font(CouchTheme.Typography.bodyEmphasized)
-                .foregroundStyle(CouchTheme.primaryStrong)
+                .foregroundStyle(CouchTheme.textSecondary)
             }
         }
         .padding(CouchTheme.Spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(CouchTheme.background)
-        .navigationTitle("Microphone")
-        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var hero: some View {
+        ZStack {
+            Circle()
+                .fill(CouchTheme.primarySoft.opacity(0.7))
+                .frame(width: 180, height: 180)
+                .blur(radius: 20)
+            Image(systemName: "mic.fill")
+                .font(.system(size: 90, weight: .bold))
+                .foregroundStyle(CouchTheme.accentGradient)
+                .shadow(color: CouchTheme.primary.opacity(0.3), radius: 18, x: 0, y: 10)
+        }
+        .frame(height: 180)
+        .padding(.top, CouchTheme.Spacing.md)
     }
 
     private func handlePrimary() async {

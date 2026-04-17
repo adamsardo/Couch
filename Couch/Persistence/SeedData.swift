@@ -11,6 +11,13 @@ enum SeedData {
         try? context.save()
     }
 
+    /// Idempotent helper callable from UI flows (e.g. the personalising loader).
+    static func ensureScenariosExist(in context: ModelContext) {
+        seedScenarios(in: context)
+        seedMicroDrills(in: context)
+        try? context.save()
+    }
+
     private static func seedScenarios(in context: ModelContext) {
         let id = ScenarioCatalog.marcus.id
         let descriptor = FetchDescriptor<Scenario>(predicate: #Predicate { $0.id == id })

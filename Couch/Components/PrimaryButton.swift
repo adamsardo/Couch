@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Single, opinionated CTA button used everywhere a screen has one clear next action.
+/// Black pill CTA used at the bottom of every flow-driven screen.
 struct PrimaryButton: View {
     let title: String
     var systemImage: String? = nil
     var isLoading: Bool = false
+    var isEnabled: Bool = true
     var role: ButtonRole? = nil
     let action: () -> Void
 
@@ -17,33 +18,43 @@ struct PrimaryButton: View {
                 if isLoading {
                     ProgressView()
                         .controlSize(.small)
-                        .tint(CouchTheme.surface)
+                        .tint(.white)
                 } else if let systemImage {
                     Image(systemName: systemImage)
                         .font(.body.weight(.semibold))
                 }
                 Text(title)
-                    .font(CouchTheme.Typography.bodyEmphasized)
+                    .font(CouchTheme.Typography.pillCTA)
             }
-            .frame(maxWidth: .infinity, minHeight: 52)
+            .frame(maxWidth: .infinity, minHeight: 60)
             .padding(.horizontal, CouchTheme.Spacing.md)
-            .foregroundStyle(role == .destructive ? Color.white : CouchTheme.surface)
+            .foregroundStyle(labelColor)
             .background(
                 RoundedRectangle(cornerRadius: CouchTheme.Radius.control, style: .continuous)
-                    .fill(role == .destructive ? AnyShapeStyle(CouchTheme.danger) : AnyShapeStyle(LinearGradient(
-                        colors: [CouchTheme.primary, CouchTheme.primaryStrong],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )))
+                    .fill(backgroundFill)
             )
         }
-        .disabled(isLoading)
+        .disabled(isLoading || !isEnabled)
         .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.15), value: isEnabled)
+        .animation(.easeInOut(duration: 0.15), value: isLoading)
         .accessibilityLabel(title)
+    }
+
+    private var labelColor: Color {
+        if role == .destructive { return .white }
+        if !isEnabled { return CouchTheme.textMuted }
+        return .white
+    }
+
+    private var backgroundFill: Color {
+        if role == .destructive { return CouchTheme.danger }
+        if !isEnabled { return CouchTheme.surfaceMuted }
+        return CouchTheme.textPrimary
     }
 }
 
-/// Quieter secondary action used alongside `PrimaryButton`.
+/// Outlined pill used alongside `PrimaryButton` for lower-stakes actions.
 struct SecondaryButton: View {
     let title: String
     var systemImage: String? = nil
@@ -61,12 +72,12 @@ struct SecondaryButton: View {
                 Text(title)
                     .font(CouchTheme.Typography.bodyEmphasized)
             }
-            .frame(maxWidth: .infinity, minHeight: 48)
+            .frame(maxWidth: .infinity, minHeight: 52)
             .padding(.horizontal, CouchTheme.Spacing.md)
-            .foregroundStyle(CouchTheme.primaryStrong)
+            .foregroundStyle(CouchTheme.textPrimary)
             .background(
                 RoundedRectangle(cornerRadius: CouchTheme.Radius.control, style: .continuous)
-                    .strokeBorder(CouchTheme.primary.opacity(0.4), lineWidth: 1)
+                    .fill(CouchTheme.surfaceMuted)
             )
         }
         .buttonStyle(.plain)
@@ -76,10 +87,11 @@ struct SecondaryButton: View {
 
 #Preview {
     VStack(spacing: 16) {
-        PrimaryButton(title: "Start free practice", systemImage: "waveform") {}
-        PrimaryButton(title: "Loading…", isLoading: true) {}
-        SecondaryButton(title: "Skip for now") {}
-        PrimaryButton(title: "End session", role: .destructive) {}
+        PrimaryButton(title: "Continue", action: {})
+        PrimaryButton(title: "Continue", isEnabled: false, action: {})
+        PrimaryButton(title: "Loading…", isLoading: true, action: {})
+        SecondaryButton(title: "Plan conversation", systemImage: "clock") {}
+        PrimaryButton(title: "End session", role: .destructive, action: {})
     }
     .padding()
     .background(CouchTheme.background)

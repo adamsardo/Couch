@@ -1,8 +1,8 @@
 import SwiftData
 import SwiftUI
 
-/// Hosts the live session: top status row, transcript, and control bar.
-/// Presents the debrief gate as a non-dismissable fullScreenCover when the user ends.
+/// Dark-mode call UI. Full-bleed patient portrait up top, Live indicator, mm:ss timer,
+/// overlaid transcript, and large red circular Mute / End buttons at the bottom.
 struct ConversationView: View {
     @Environment(\.modelContext) private var modelContext
     let scenario: Scenario
@@ -12,21 +12,24 @@ struct ConversationView: View {
     @State private var coordinator: SessionCoordinator?
     @State private var draft: String = ""
     @State private var showFreeze: Bool = false
+    @State private var showTextPanel: Bool = false
     @State private var showDebrief: Bool = false
     @State private var hasStarted = false
 
     var body: some View {
-        Group {
+        ZStack {
+            CouchTheme.callSurface.ignoresSafeArea()
+
             if let coordinator {
                 liveBody(coordinator: coordinator)
             } else {
                 ProgressView()
                     .controlSize(.large)
+                    .tint(.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(CouchTheme.background)
             }
         }
-        .background(CouchTheme.background.ignoresSafeArea())
+        .preferredColorScheme(.dark)
         .task {
             guard !hasStarted else { return }
             hasStarted = true
@@ -50,16 +53,35 @@ struct ConversationView: View {
     @ViewBuilder
     private func liveBody(coordinator: SessionCoordinator) -> some View {
         VStack(spacing: 0) {
-            sessionHeader(coordinator: coordinator)
-            TranscriptView(turns: coordinator.visibleTurns, scenario: scenario)
-                .frame(maxHeight: .infinity)
-            SessionControlBar(
-                draft: $draft,
-                mode: mode,
+            CallPortrait(
+                scenario: scenario,
+                phase: coordinator.phase,
+                agentMode: coordinator.agentMode,
+                elapsed: coordinator.elapsed
+            )
+            .containerRelativeFrame(.vertical) { length, _ in length * 0.46 }
+            .frame(maxWidth: .infinity)
+
+            TranscriptView(
+                turns: coordinator.visibleTurns,
+                scenario: scenario,
+                appearance: .dark
+            )
+            .frame(maxHeight: .infinity)
+            .mask(
+                LinearGradient(
+                    colors: [.clear, .black, .black, .black],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+
+            CallControlBar(
                 isMuted: coordinator.isMuted,
-                onSend: { text in Task { await coordinator.sendText(text) } },
+                mode: mode,
                 onMuteToggle: { Task { await coordinator.toggleMute() } },
                 onFreezeHelp: { showFreeze = true },
+                onTextPanel: { showTextPanel = true },
                 onEnd: { Task { await endAndPresentDebrief(coordinator: coordinator) } }
             )
         }
@@ -68,6 +90,14 @@ struct ConversationView: View {
                 draft = prompt
                 coordinator.recordFreezeHelpInteraction(prompt)
             }
+            .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showTextPanel) {
+            CallTextPanel(draft: $draft) { text in
+                showTextPanel = false
+                Task { await coordinator.sendText(text) }
+            }
+            .presentationDetents([.medium])
         }
         .overlay(alignment: .top) {
             if case .error(let message) = coordinator.phase {
@@ -78,60 +108,119 @@ struct ConversationView: View {
         .animation(.easeInOut(duration: 0.2), value: coordinator.phase)
     }
 
-    private func sessionHeader(coordinator: SessionCoordinator) -> some View {
-        HStack(spacing: CouchTheme.Spacing.md) {
-            SpeakingOrb(mode: orbMode(for: coordinator))
-                .frame(width: 56, height: 56)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(scenario.patientName)
-                    .font(CouchTheme.Typography.cardTitle)
-                    .foregroundStyle(CouchTheme.textPrimary)
-                Text(headerSubtitle(coordinator: coordinator))
-                    .font(CouchTheme.Typography.caption)
-                    .foregroundStyle(CouchTheme.textSecondary)
-            }
-            Spacer()
-            Text(TimeFormatting.mmss(coordinator.elapsed))
-                .font(CouchTheme.Typography.bodyEmphasized.monospacedDigit())
-                .foregroundStyle(CouchTheme.textPrimary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Capsule().fill(CouchTheme.surface))
-                .overlay(Capsule().strokeBorder(CouchTheme.divider, lineWidth: 1))
-        }
-        .padding(.horizontal, CouchTheme.Spacing.lg)
-        .padding(.vertical, CouchTheme.Spacing.md)
-    }
-
-    private func orbMode(for coordinator: SessionCoordinator) -> SpeakingOrb.Mode {
-        switch coordinator.phase {
-        case .intro: return .idle
-        case .connecting: return .connecting
-        case .live, .ending:
-            return coordinator.agentMode == .speaking ? .speaking : .listening
-        case .ended, .error: return .idle
-        }
-    }
-
-    private func headerSubtitle(coordinator: SessionCoordinator) -> String {
-        switch coordinator.phase {
-        case .intro: return "Getting ready…"
-        case .connecting: return "Connecting…"
-        case .live:
-            switch coordinator.agentMode {
-            case .speaking: return "Speaking"
-            case .listening: return "Listening"
-            case .idle: return "Live"
-            }
-        case .ending: return "Wrapping up…"
-        case .ended: return "Session ended"
-        case .error(let m): return m
-        }
-    }
-
     private func endAndPresentDebrief(coordinator: SessionCoordinator) async {
         await coordinator.end()
         showDebrief = true
+    }
+}
+
+private struct CallPortrait: View {
+    let scenario: Scenario
+    let phase: SessionCoordinator.Phase
+    let agentMode: SessionCoordinator.AgentMode
+    let elapsed: TimeInterval
+
+    var body: some View {
+        ZStack {
+            portraitBackground
+
+            LinearGradient(
+                colors: [.black.opacity(0.4), .clear, .clear, .black.opacity(0.5)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack {
+                HStack {
+                    LivePill(isLive: phase == .live)
+                    Spacer()
+                    VStack(spacing: 2) {
+                        Text(scenario.patientName)
+                            .font(CouchTheme.Typography.cardTitle)
+                            .foregroundStyle(.white)
+                        Text("AI simulated patient")
+                            .font(CouchTheme.Typography.caption)
+                            .foregroundStyle(.white.opacity(0.65))
+                    }
+                    Spacer()
+                    TimerPill(elapsed: elapsed)
+                }
+                .padding(.horizontal, CouchTheme.Spacing.lg)
+                .padding(.top, CouchTheme.Spacing.md)
+
+                Spacer()
+
+                if phase == .connecting {
+                    Text("Connecting…")
+                        .font(CouchTheme.Typography.bodyEmphasized)
+                        .foregroundStyle(.white.opacity(0.75))
+                        .padding(.bottom, CouchTheme.Spacing.md)
+                } else if agentMode == .speaking {
+                    Label("Speaking", systemImage: "waveform")
+                        .font(CouchTheme.Typography.pill)
+                        .foregroundStyle(CouchTheme.callCaption)
+                        .padding(.bottom, CouchTheme.Spacing.md)
+                } else if agentMode == .listening {
+                    Label("Listening", systemImage: "ear")
+                        .font(CouchTheme.Typography.pill)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .padding(.bottom, CouchTheme.Spacing.md)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var portraitBackground: some View {
+        let assetName = "scenario-\(scenario.id)"
+        if UIImage(named: assetName) != nil {
+            Image(assetName)
+                .resizable()
+                .scaledToFill()
+                .clipped()
+        } else {
+            ZStack {
+                LinearGradient(
+                    colors: [CouchTheme.callSurfaceMuted, CouchTheme.callSurface],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                Text(String(scenario.patientName.prefix(1)))
+                    .font(.system(size: 140, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.white.opacity(0.08))
+            }
+        }
+    }
+}
+
+private struct LivePill: View {
+    let isLive: Bool
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(CouchTheme.danger)
+                .frame(width: 8, height: 8)
+            Text(isLive ? "Live" : "•")
+                .font(CouchTheme.Typography.pill)
+                .foregroundStyle(.white)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Capsule().fill(CouchTheme.callSurfaceMuted.opacity(0.75)))
+    }
+}
+
+private struct TimerPill: View {
+    let elapsed: TimeInterval
+
+    var body: some View {
+        Text(TimeFormatting.mmss(elapsed))
+            .font(CouchTheme.Typography.pill.monospacedDigit())
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Capsule().fill(CouchTheme.callSurfaceMuted.opacity(0.75)))
     }
 }
 

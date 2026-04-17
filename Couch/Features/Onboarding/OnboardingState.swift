@@ -10,19 +10,30 @@ import SwiftData
 @Observable
 @MainActor
 final class OnboardingState {
-    enum Step: Hashable {
-        case welcome
-        case safety
+    enum Step: Hashable, CaseIterable {
+        case name
+        case privacy
+        case socialProof
+        case stressors
+        case goals
         case quickProfile
-        case friction
-        case scenarioRecommendation
+        case scienceChart
+        case personalising
+        case scenarioMatch
+        case scenarioDetail
+        case notifications
         case microphone
     }
 
     var path: [Step] = []
+
+    var name: String = ""
     var yearLevel: YearLevel?
     var placementWindow: PlacementWindow?
-    var topStressor: FrictionStressor?
+    var stressors: Set<FrictionStressor> = []
+    var goals: Set<PracticeGoal> = []
+    var consentAccepted: Bool = false
+    var notificationsGranted: Bool = false
     var micPermission: MicPermissionStatus = .undetermined
     var sessionMode: SessionMode = .voice
     var didFinish = false
@@ -31,16 +42,27 @@ final class OnboardingState {
         path.append(step)
     }
 
-    func skipQuickProfile() {
-        yearLevel = nil
-        placementWindow = nil
-        advance(to: .friction)
+    /// Used by the flow container to render the orange progress bar.
+    func progress(for step: Step) -> Double {
+        let ordered = Step.allCases
+        guard let index = ordered.firstIndex(of: step) else { return 0 }
+        let total = max(ordered.count - 1, 1)
+        return Double(index) / Double(total)
+    }
+
+    /// Single stressor is still useful elsewhere (e.g. aha-moment copy).
+    var primaryStressor: FrictionStressor? {
+        stressors.first
     }
 
     func finish(saveTo profile: UserProfile, in context: ModelContext) {
+        profile.name = name.isEmpty ? nil : name
         profile.yearLevel = yearLevel?.rawValue
         profile.placementWindow = placementWindow?.rawValue
-        profile.topStressor = topStressor?.rawValue
+        profile.topStressor = primaryStressor?.rawValue
+        profile.stressors = stressors.map(\.rawValue)
+        profile.goals = goals.map(\.rawValue)
+        profile.notificationsEnabled = notificationsGranted
         profile.onboardedAt = .now
         try? context.save()
         didFinish = true
