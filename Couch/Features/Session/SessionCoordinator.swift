@@ -1,13 +1,16 @@
-import Combine
-import ElevenLabs
 import Foundation
 import LiveKit
 import Observation
 import SwiftData
 import OSLog
 
-/// Owns one in-flight session: connects to ElevenLabs, bridges its Combine streams to
-/// the SwiftUI layer via @Observable, and persists every turn through `TranscriptStore`.
+/// Owns one in-flight session. Instead of speaking to a realtime SDK
+/// directly, the coordinator now owns a ``ConversationDriver`` (legacy
+/// ElevenLabs or LiveKit + LemonSlice) and maps its events into
+/// SwiftUI-observable state + SwiftData writes.
+///
+/// The driver seam is the architectural refactor required by PRD §6.1. It
+/// lets us turn LiveKit on/off without rewriting the coordinator each time.
 @Observable
 @MainActor
 final class SessionCoordinator {
@@ -33,16 +36,26 @@ final class SessionCoordinator {
     var rapportScore: Int = 20
     var elapsed: TimeInterval = 0
 
+    /// Remote avatar video track when the active driver is LiveKit. `nil`
+    /// otherwise or when no track has been subscribed yet.
+    var remoteAvatarTrack: VideoTrack? { liveKitDriver?.remoteAvatarTrack }
+    /// Whether the client should show a "Video unavailable" hint. True when
+    /// we know the backend disabled avatars for this session.
+    var shouldShowVideoUnavailableHint: Bool = false
+    /// True when the currently active transport can produce live video.
+    var avatarCapable: Bool { transport == .liveKit && AppFeatureFlags.current.avatarsEnabled }
+
     private let scenario: Scenario
     private let scenarioSnapshot: ScenarioSnapshot
     private let mode: SessionMode
+    private let transport: SessionTransport
     private let modelContext: ModelContext
     private let store: TranscriptStore
-    private let assembler = TranscriptAssembler()
     private let estimator = RapportEstimator()
 
-    private var conversation: Conversation?
-    private var cancellables = Set<AnyCancellable>()
+    private var driver: ConversationDriver?
+    private var liveKitDriver: LiveKitConversationDriver? { driver as? LiveKitConversationDriver }
+    private var eventTask: Task<Void, Never>?
     private var timerTask: Task<Void, Never>?
     private var sessionID: PersistentIdentifier?
     private var startedAt: Date?
@@ -58,7 +71,24 @@ final class SessionCoordinator {
         )
         self.mode = mode
         self.modelContext = modelContext
+        // Resolve the effective transport now so feature-flag flips only
+        // apply to new sessions rather than mid-conversation.
+        let flagged = AppFeatureFlags.current.liveKitTransportEnabled
+            ? scenario.transport
+            : .elevenLabsDirect
+        // Fall back to the direct path if the LiveKit backend is missing.
+        if flagged == .liveKit && LiveKitTokenClient.resolved() == nil {
+            Logger.session.info("LiveKit transport requested but backend is not configured; falling back to elevenLabsDirect.")
+            self.transport = .elevenLabsDirect
+        } else {
+            self.transport = flagged
+        }
         self.store = TranscriptStore(modelContainer: modelContext.container)
+    }
+
+    deinit {
+        eventTask?.cancel()
+        timerTask?.cancel()
     }
 
     var snapshot: SessionSnapshot {
@@ -85,36 +115,35 @@ final class SessionCoordinator {
         sessionID = session.persistentModelID
         startedAt = session.startedAt
         startTimer()
+
+        let driver = makeDriver()
+        self.driver = driver
+        startObservingEvents(from: driver)
+
         do {
-            let conversation = try await ElevenLabsClient.shared.startConversation(
-                agentId: scenario.elevenLabsAgentId,
-                textOnly: mode == .text
-            )
-            self.conversation = conversation
-            wireObservers(for: conversation)
+            try await driver.start()
             CouchHaptics.sessionStart()
         } catch {
-            Logger.session.error("startConversation failed: \(error.localizedDescription, privacy: .public)")
+            Logger.session.error("driver.start failed: \(error.localizedDescription, privacy: .public)")
             phase = .error(error.localizedDescription)
         }
     }
 
     func sendText(_ text: String) async {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let conversation else { return }
-        try? await conversation.sendMessage(trimmed)
+        guard !trimmed.isEmpty else { return }
+        await driver?.sendText(trimmed)
     }
 
     func toggleMute() async {
-        guard let conversation else { return }
-        try? await conversation.toggleMute()
+        await driver?.toggleMute()
     }
 
     func end(reason: String? = nil) async {
         phase = .ending
         timerTask?.cancel()
         timerTask = nil
-        await conversation?.endConversation()
+        await driver?.end()
         if let sessionID {
             try? await store.finishSession(
                 sessionID: sessionID,
@@ -125,88 +154,116 @@ final class SessionCoordinator {
         }
         CouchHaptics.sessionEnd()
         phase = .ended(reason: reason)
+        eventTask?.cancel()
+        eventTask = nil
     }
 
-    /// Inserts a freeze-help "system" prompt locally without sending it to the agent.
-    /// We surface this in the freeze-help sheet — never autoplayed back to the patient.
+    /// Inserts a freeze-help "system" prompt locally without sending it to
+    /// the agent. We surface this in the freeze-help sheet — never autoplayed
+    /// back to the patient.
     func recordFreezeHelpInteraction(_ prompt: String) {
         let display = DisplayTurn(id: UUID(), externalID: UUID().uuidString, role: .system, text: prompt, createdAt: .now)
         visibleTurns.append(display)
     }
 
-    private func wireObservers(for conversation: Conversation) {
-        conversation.$state
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] state in
-                self?.handle(state: state)
-            }
-            .store(in: &cancellables)
+    // MARK: - Driver wiring
 
-        conversation.$agentState
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] state in
-                switch state {
-                case .speaking: self?.agentMode = .speaking
-                case .listening, .thinking, .initializing: self?.agentMode = .listening
-                default: self?.agentMode = .idle
-                }
+    private func makeDriver() -> ConversationDriver {
+        switch transport {
+        case .liveKit:
+            if let tokenClient = LiveKitTokenClient.resolved() {
+                let profileIdentity = ProfileParticipantIdentityResolver
+                    .resolveIdentity(in: modelContext)
+                return LiveKitConversationDriver(
+                    tokenClient: tokenClient,
+                    context: .init(
+                        scenarioID: scenario.id,
+                        mode: mode,
+                        participantName: "Student",
+                        participantIdentity: profileIdentity
+                    )
+                )
             }
-            .store(in: &cancellables)
-
-        conversation.$messages
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] messages in
-                self?.handle(messages: messages)
-            }
-            .store(in: &cancellables)
-
-        conversation.$isMuted
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] muted in self?.isMuted = muted }
-            .store(in: &cancellables)
+            fallthrough
+        case .elevenLabsDirect:
+            return ElevenLabsConversationDriver(
+                agentId: scenario.elevenLabsAgentId,
+                mode: mode
+            )
+        }
     }
 
-    private func handle(state: ConversationState) {
-        switch state {
-        case .idle:
+    private func startObservingEvents(from driver: ConversationDriver) {
+        eventTask?.cancel()
+        eventTask = Task { [weak self] in
+            for await event in driver.events {
+                guard let self else { return }
+                await self.apply(event)
+            }
+        }
+    }
+
+    private func apply(_ event: ConversationDriverEvent) async {
+        switch event {
+        case .phaseChanged(let driverPhase):
+            apply(driverPhase: driverPhase)
+        case .agentModeChanged(let mode):
+            switch mode {
+            case .idle: agentMode = .idle
+            case .listening: agentMode = .listening
+            case .speaking: agentMode = .speaking
+            }
+        case .muteChanged(let muted):
+            isMuted = muted
+        case .newTurn(let turn):
+            appendTurn(turn)
+        case .avatarVideoAvailabilityChanged(let available):
+            shouldShowVideoUnavailableHint = !available && transport == .liveKit
+        case .avatarStartFailed:
+            shouldShowVideoUnavailableHint = true
+        }
+    }
+
+    private func apply(driverPhase: ConversationDriverPhase) {
+        switch driverPhase {
+        case .idle, .connecting:
             phase = .connecting
-        case .connecting:
-            phase = .connecting
-        case .active:
+        case .live:
             phase = .live
         case .ended(let reason):
-            phase = .ended(reason: String(describing: reason))
-        case .error(let error):
-            phase = .error(String(describing: error))
+            phase = .ended(reason: reason)
+        case .error(let message):
+            phase = .error(message)
         }
     }
 
-    private func handle(messages: [Message]) {
-        let pending = assembler.newTurns(from: messages)
-        guard !pending.isEmpty else { return }
-        for turn in pending {
-            visibleTurns.append(DisplayTurn(
-                id: turn.id,
-                externalID: turn.externalID,
-                role: turn.role,
-                text: turn.text,
-                createdAt: turn.createdAt
-            ))
+    private func appendTurn(_ turn: ConversationDriverTurn) {
+        // Dedupe defensively on external id — both drivers make an effort to
+        // avoid duplicates, but belt-and-braces protects against transcription
+        // reflow edge cases.
+        if visibleTurns.contains(where: { $0.externalID == turn.externalID }) {
+            return
         }
+        let display = DisplayTurn(
+            id: turn.id,
+            externalID: turn.externalID,
+            role: turn.role,
+            text: turn.text,
+            createdAt: turn.createdAt
+        )
+        visibleTurns.append(display)
         rapportScore = estimator.estimate(turns: visibleTurns.map {
             RapportTurn(role: $0.role, text: $0.text)
         })
         if let sessionID {
-            let snapshot = pending
+            let snapshot = turn
             Task { [store] in
-                for turn in snapshot {
-                    _ = try? await store.appendTurn(
-                        sessionID: sessionID,
-                        role: turn.role,
-                        text: turn.text,
-                        createdAt: turn.createdAt
-                    )
-                }
+                _ = try? await store.appendTurn(
+                    sessionID: sessionID,
+                    role: snapshot.role,
+                    text: snapshot.text,
+                    createdAt: snapshot.createdAt
+                )
             }
         }
     }
@@ -238,4 +295,23 @@ nonisolated struct SessionSnapshot: Sendable {
     let turns: [TurnSnapshot]
     let rapport: Int
     let elapsed: TimeInterval
+}
+
+/// Resolves a stable LiveKit participant identity from the single
+/// on-device ``UserProfile``, so analytics on the backend can correlate reps
+/// without us having to introduce accounts.
+enum ProfileParticipantIdentityResolver {
+    private static let installIdentityKey = "com.couch.liveKit.participantIdentity"
+
+    /// Stable per-install identity so backend analytics can group reps
+    /// without Couch shipping accounts. Cached in UserDefaults on first use.
+    static func resolveIdentity(in _: ModelContext) -> String {
+        let defaults = UserDefaults.standard
+        if let cached = defaults.string(forKey: installIdentityKey), !cached.isEmpty {
+            return cached
+        }
+        let fresh = "student-\(UUID().uuidString.lowercased().prefix(12))"
+        defaults.set(fresh, forKey: installIdentityKey)
+        return fresh
+    }
 }
