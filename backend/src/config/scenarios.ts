@@ -59,9 +59,7 @@ const MARCUS: ScenarioConfig = {
     systemPrompt: MARCUS_SYSTEM_PROMPT,
     avatarPrompt:
       'You are a 28-year-old man at his first therapy session. Reserved and guarded early, softening only gradually. Subtle facial expressions. Minimal hand movement.',
-    openingLine: undefined,
   },
-  elevenLabsVoiceID: undefined,
 };
 
 const CATALOG: Record<string, ScenarioConfig> = {
@@ -126,15 +124,20 @@ export function resolveAvatarConfig(scenario: ScenarioConfig): ResolvedAvatarCon
     return { enabled: false, provider: 'none', startTimeoutSeconds };
   }
 
+  const lemonslice: ResolvedAvatarConfig['lemonslice'] = { apiKey: e.LEMONSLICE_API_KEY };
+  if (agentId) {
+    lemonslice.agentId = agentId;
+  } else if (agentImageUrl) {
+    lemonslice.agentImageUrl = agentImageUrl;
+  }
+  if (scenario.persona.avatarPrompt) {
+    lemonslice.agentPrompt = scenario.persona.avatarPrompt;
+  }
+
   return {
     enabled: true,
     provider: 'lemonslice',
-    lemonslice: {
-      apiKey: e.LEMONSLICE_API_KEY,
-      agentId: agentId ?? undefined,
-      agentImageUrl: agentId ? undefined : agentImageUrl,
-      agentPrompt: scenario.persona.avatarPrompt,
-    },
+    lemonslice,
     startTimeoutSeconds,
   };
 }

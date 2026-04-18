@@ -1,5 +1,9 @@
 import Fastify from 'fastify';
-import { AccessToken } from 'livekit-server-sdk';
+import {
+  AccessToken,
+  RoomAgentDispatch,
+  RoomConfiguration,
+} from 'livekit-server-sdk';
 import { z } from 'zod';
 
 import { env } from './config/env.js';
@@ -85,17 +89,17 @@ export async function buildApp() {
       canUpdateOwnMetadata: true,
     });
 
-    token.roomConfig = {
+    token.roomConfig = new RoomConfiguration({
       agents: [
-        {
+        new RoomAgentDispatch({
           agentName: scenario.agentName,
           metadata: JSON.stringify({
             scenarioId: scenario.id,
             mode: parsed.data.mode,
           }),
-        },
+        }),
       ],
-    };
+    });
 
     const jwt = await token.toJwt();
 

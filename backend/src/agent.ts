@@ -4,6 +4,8 @@ import {
   ServerOptions,
   cli,
   defineAgent,
+  log,
+  tts as ttsMod,
   voice,
 } from '@livekit/agents';
 import * as openai from '@livekit/agents-plugin-openai';
@@ -49,7 +51,7 @@ function parseDispatchMetadata(raw: string | undefined | null): DispatchMetadata
  * so Marcus keeps the voice identity students already know; falls back to
  * OpenAI TTS if no ElevenLabs key is configured.
  */
-function buildTTS(scenario: ScenarioConfig): voice.TTS {
+function buildTTS(scenario: ScenarioConfig): ttsMod.TTS {
   const e = env();
   if (e.ELEVENLABS_API_KEY) {
     const voiceId = scenario.elevenLabsVoiceID ?? e.ELEVENLABS_MARCUS_VOICE_ID;
@@ -71,9 +73,10 @@ async function maybeStartAvatar(
   ctx: JobContext,
   scenario: ScenarioConfig,
 ): Promise<boolean> {
+  const logger = log();
   const avatar = resolveAvatarConfig(scenario);
   if (!avatar.enabled || avatar.provider !== 'lemonslice' || !avatar.lemonslice) {
-    ctx.log.info({ scenarioId: scenario.id }, 'avatar disabled, running audio-only');
+    logger.info({ scenarioId: scenario.id }, 'avatar disabled, running audio-only');
     return false;
   }
 
@@ -104,10 +107,10 @@ async function maybeStartAvatar(
         ),
       ),
     ]);
-    ctx.log.info({ scenarioId: scenario.id }, 'avatar started');
+    logger.info({ scenarioId: scenario.id }, 'avatar started');
     return true;
   } catch (err) {
-    ctx.log.warn(
+    logger.warn(
       { err: (err as Error).message, scenarioId: scenario.id },
       'avatar start failed — falling back to audio-only',
     );
@@ -123,6 +126,7 @@ export default defineAgent({
   },
   entry: async (ctx: JobContext) => {
     const e = env();
+    const logger = log();
 
     const meta = parseDispatchMetadata(ctx.job.metadata);
     let scenario: ScenarioConfig;
@@ -130,7 +134,7 @@ export default defineAgent({
       scenario = scenarioConfig(meta.scenarioId);
     } catch (err) {
       if (err instanceof ScenarioLookupError) {
-        ctx.log.error({ scenarioId: meta.scenarioId }, 'unknown scenario — aborting');
+        logger.error({ scenarioId: meta.scenarioId }, 'unknown scenario — aborting');
       }
       throw err;
     }
@@ -156,11 +160,7 @@ export default defineAgent({
 
     await ctx.connect();
 
-    if (meta.mode !== 'text') {
-      // Let the student open. Marcus is reluctant — we deliberately do NOT
-      // have the agent speak first (see persona prompt).
-      ctx.log.info({ scenarioId: scenario.id, mode: meta.mode }, 'session ready');
-    }
+    logger.info({ scenarioId: scenario.id, mode: meta.mode }, 'session ready');
   },
 });
 
