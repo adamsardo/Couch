@@ -53,13 +53,14 @@ Copy `Couch/Secrets.plist.example` to `Couch/Secrets.plist` (gitignored) and fil
 | Key | Where to get it |
 |-----|-----------------|
 | `OPENAI_API_KEY` | <https://platform.openai.com/api-keys> — used for the post-session debrief |
+| `ELEVENLABS_API_KEY` | Optional for the current setup. Only needed if you switch away from the current **public** Marcus agent flow and start minting private-agent conversation tokens. |
 | `MARCUS_AGENT_ID` | The agent ID from <https://elevenlabs.io/app/conversational-ai> for the Marcus persona (set as a **public** agent so the app can connect without a backend) |
 
 Then add `Couch/Secrets.plist` to the **Couch** app target in Xcode (drag into the Project Navigator and tick the Couch target). The app reads it at launch via `SecretsProvider`, with a Keychain fallback for the OpenAI key.
 
-Alternatively, define `OPENAI_API_KEY` and `MARCUS_AGENT_ID` as scheme environment variables for ad-hoc local runs.
+Alternatively, define `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, and `MARCUS_AGENT_ID` as scheme environment variables for ad-hoc local runs.
 
-> **V1 only.** Storing the OpenAI key on-device is fine for dev and TestFlight but **not** for App Store distribution. The plan leaves a `ConversationAuthProvider` hook so you can swap to a signed-URL backend later without touching the session UI.
+> **V1 only.** Storing the OpenAI key on-device is fine for dev and TestFlight but **not** for App Store distribution. The current ElevenLabs integration uses a public agent ID, not an ElevenLabs API key. The plan leaves a `ConversationAuthProvider` hook so you can swap to a signed-URL or private-agent backend later without touching the session UI.
 
 ### 3. Configure the Marcus agent in ElevenLabs
 

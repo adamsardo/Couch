@@ -6,13 +6,22 @@ import OSLog
 /// xcconfig-bridged build settings) — never from a committed file.
 ///
 /// This is the **only** location in the app that reads raw secrets. All callers go
-/// through ``elevenLabsAgentID(forKey:)`` and ``openAIAPIKey()``.
+/// through ``elevenLabsAgentID(forKey:)``, ``elevenLabsAPIKey()``, and
+/// ``openAIAPIKey()``.
 nonisolated final class SecretsProvider: Sendable {
     static let shared = SecretsProvider()
 
     /// `MARCUS_AGENT_ID` from Info.plist / env, or empty. Empty = scenario will refuse to start.
     func elevenLabsAgentID(forKey key: String) -> String {
         return string(forKey: key) ?? ""
+    }
+
+    /// ElevenLabs API key from Info.plist / env for private-agent token flows.
+    ///
+    /// The current V1 app connects to a public agent using `MARCUS_AGENT_ID` alone, so this
+    /// key is optional unless you switch to private-agent authentication.
+    func elevenLabsAPIKey() -> String? {
+        return string(forKey: "ELEVENLABS_API_KEY")
     }
 
     /// OpenAI API key from Keychain (preferred) or Info.plist / env (dev fallback).
