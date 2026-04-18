@@ -13,16 +13,28 @@ enum ScenarioCatalog {
             openingCue: "Marcus walks in, sits down without a word, and waits for you to start.",
             calmingCue: "Take a breath. Curiosity, not certainty.",
             agentIDInfoPlistKey: "MARCUS_AGENT_ID",
-            tags: ["intake", "resistant", "minimisation"]
+            tags: ["intake", "resistant", "minimisation"],
+            preferredTransport: .liveKit,
+            preferredAvatarProvider: .lemonslice
         )
     }
 
     static var marcus: ScenarioBlueprint { Scenarios.marcus }
 
-    /// Build the SwiftData model from the static blueprint, resolving the agent ID from
-    /// the bundle's Info.plist (set via xcconfig or scheme env var).
+    /// Build the SwiftData model from the static blueprint. The transport is
+    /// chosen from the LiveKit feature flag at seed time so a turnaround is
+    /// a single env/plist flip rather than a code change.
+    ///
+    /// Returning scenarios via this factory (rather than a hard literal)
+    /// keeps the seed-first-run and the UI models in sync.
     static func marcusScenarioModel() -> Scenario {
         let blueprint = marcus
+        let transport: SessionTransport =
+            AppFeatureFlags.current.liveKitTransportEnabled
+                ? blueprint.preferredTransport
+                : .elevenLabsDirect
+        let avatarProvider: ScenarioAvatarProvider =
+            transport == .liveKit ? blueprint.preferredAvatarProvider : .none
         return Scenario(
             id: blueprint.id,
             title: blueprint.title,
@@ -32,6 +44,8 @@ enum ScenarioCatalog {
             openingCue: blueprint.openingCue,
             calmingCue: blueprint.calmingCue,
             elevenLabsAgentId: SecretsProvider.shared.elevenLabsAgentID(forKey: blueprint.agentIDInfoPlistKey),
+            transport: transport,
+            avatarProvider: avatarProvider,
             tags: blueprint.tags
         )
     }
@@ -48,4 +62,6 @@ nonisolated struct ScenarioBlueprint: Sendable, Equatable {
     let calmingCue: String
     let agentIDInfoPlistKey: String
     let tags: [String]
+    let preferredTransport: SessionTransport
+    let preferredAvatarProvider: ScenarioAvatarProvider
 }

@@ -21,12 +21,13 @@ struct ConversationView: View {
 
     var body: some View {
         ZStack {
-            ScenarioPortraitView(
+            AvatarStageView(
                 scenario: scenario,
-                crop: .full,
-                overlays: [.topScrim, .bottomScrim, .vignette]
+                track: coordinator?.avatarCapable == true ? coordinator?.remoteAvatarTrack : nil,
+                overlays: [.topScrim, .bottomScrim, .vignette],
+                showVideoUnavailableHint: coordinator?.shouldShowVideoUnavailableHint ?? false
             )
-            .ignoresSafeArea()
+            .animation(CouchMotion.stateChange, value: coordinator?.remoteAvatarTrack != nil)
 
             if let coordinator {
                 liveBody(coordinator: coordinator)
