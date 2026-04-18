@@ -21,8 +21,17 @@ enum SeedData {
     private static func seedScenarios(in context: ModelContext) {
         let id = ScenarioCatalog.marcus.id
         let descriptor = FetchDescriptor<Scenario>(predicate: #Predicate { $0.id == id })
-        if (try? context.fetch(descriptor).first) == nil {
-            context.insert(ScenarioCatalog.marcusScenarioModel())
+        let fresh = ScenarioCatalog.marcusScenarioModel()
+        if let existing = try? context.fetch(descriptor).first {
+            // Keep the stored scenario in sync with the current blueprint +
+            // feature-flag state. This is cheap and means flipping
+            // `COUCH_LIVEKIT_ENABLED` on/off between launches actually
+            // changes which transport runs the next session.
+            existing.transport = fresh.transport
+            existing.avatarProvider = fresh.avatarProvider
+            existing.elevenLabsAgentId = fresh.elevenLabsAgentId
+        } else {
+            context.insert(fresh)
         }
     }
 
