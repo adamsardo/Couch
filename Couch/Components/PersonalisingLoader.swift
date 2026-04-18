@@ -32,9 +32,12 @@ struct PersonalisingLoader: View {
                         .padding(.vertical, 6)
                         .padding(.horizontal, CouchTheme.Spacing.md)
                         .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(CouchTheme.background)
-                                .shadow(color: CouchTheme.textPrimary.opacity(0.05), radius: 8, x: 0, y: 2)
+                            RoundedRectangle(
+                                cornerRadius: CouchTheme.Radius.inner(of: CouchTheme.Radius.bubble, padding: 4),
+                                style: .continuous
+                            )
+                            .fill(CouchTheme.background)
+                            .couchElevation(.sm)
                         )
                 }
             }

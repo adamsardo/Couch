@@ -1,10 +1,13 @@
 import SwiftData
 import SwiftUI
 
-/// Dark-mode call UI. Full-bleed patient portrait up top, Live indicator, mm:ss timer,
-/// overlaid transcript, and large red circular Mute / End buttons at the bottom.
+/// Layered in-call view. Full-bleed portrait sits behind a glass header,
+/// overlaid transcript, and a control bar. Reads as a premium video-call
+/// experience rather than a stacked form.
 struct ConversationView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let scenario: Scenario
     let mode: SessionMode
     var onClose: () -> Void
@@ -18,7 +21,12 @@ struct ConversationView: View {
 
     var body: some View {
         ZStack {
-            CouchTheme.callSurface.ignoresSafeArea()
+            ScenarioPortraitView(
+                scenario: scenario,
+                crop: .full,
+                overlays: [.topScrim, .bottomScrim, .vignette]
+            )
+            .ignoresSafeArea()
 
             if let coordinator {
                 liveBody(coordinator: coordinator)
@@ -53,28 +61,25 @@ struct ConversationView: View {
     @ViewBuilder
     private func liveBody(coordinator: SessionCoordinator) -> some View {
         VStack(spacing: 0) {
-            CallPortrait(
-                scenario: scenario,
+            CallHeader(
+                patientName: scenario.patientName,
                 phase: coordinator.phase,
-                agentMode: coordinator.agentMode,
-                elapsed: coordinator.elapsed
+                elapsed: coordinator.elapsed,
+                reduceMotion: reduceMotion
             )
-            .containerRelativeFrame(.vertical) { length, _ in length * 0.46 }
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, CouchTheme.Spacing.md)
+            .padding(.top, CouchTheme.Spacing.sm)
 
-            TranscriptView(
+            ConnectingHint(phase: coordinator.phase, agentMode: coordinator.agentMode, reduceMotion: reduceMotion)
+                .padding(.top, CouchTheme.Spacing.xs)
+
+            Spacer(minLength: 0)
+
+            OverlayTranscript(
                 turns: coordinator.visibleTurns,
-                scenario: scenario,
-                appearance: .dark
+                scenario: scenario
             )
-            .frame(maxHeight: .infinity)
-            .mask(
-                LinearGradient(
-                    colors: [.clear, .black, .black, .black],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
+            .frame(maxHeight: 420)
 
             CallControlBar(
                 isMuted: coordinator.isMuted,
@@ -83,6 +88,15 @@ struct ConversationView: View {
                 onFreezeHelp: { showFreeze = true },
                 onTextPanel: { showTextPanel = true },
                 onEnd: { Task { await endAndPresentDebrief(coordinator: coordinator) } }
+            )
+            .background(
+                LinearGradient(
+                    colors: [.clear, .black.opacity(0.55)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea(edges: .bottom)
+                .allowsHitTesting(false)
             )
         }
         .sheet(isPresented: $showFreeze) {
@@ -102,10 +116,13 @@ struct ConversationView: View {
         .overlay(alignment: .top) {
             if case .error(let message) = coordinator.phase {
                 ErrorBanner(message: message) { onClose() }
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .top).combined(with: .opacity).animation(CouchMotion.entrance),
+                        removal: .move(edge: .top).combined(with: .opacity).animation(CouchMotion.exit)
+                    ))
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: coordinator.phase)
+        .animation(CouchMotion.stateChange, value: coordinator.phase)
     }
 
     private func endAndPresentDebrief(coordinator: SessionCoordinator) async {
@@ -114,100 +131,67 @@ struct ConversationView: View {
     }
 }
 
-private struct CallPortrait: View {
-    let scenario: Scenario
+// MARK: - Header
+
+/// Glass Live pill (pulsing via variable-color symbol effect), centered
+/// name + role, glass timer pill with a numeric content transition for
+/// tactile rolling digits.
+private struct CallHeader: View {
+    let patientName: String
     let phase: SessionCoordinator.Phase
-    let agentMode: SessionCoordinator.AgentMode
     let elapsed: TimeInterval
+    let reduceMotion: Bool
+
+    private var isLive: Bool { phase == .live }
 
     var body: some View {
-        ZStack {
-            portraitBackground
+        HStack(alignment: .center, spacing: CouchTheme.Spacing.sm) {
+            LivePill(isLive: isLive, reduceMotion: reduceMotion)
 
-            LinearGradient(
-                colors: [.black.opacity(0.4), .clear, .clear, .black.opacity(0.5)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            Spacer(minLength: CouchTheme.Spacing.xs)
 
-            VStack {
-                HStack {
-                    LivePill(isLive: phase == .live)
-                    Spacer()
-                    VStack(spacing: 2) {
-                        Text(scenario.patientName)
-                            .font(CouchTheme.Typography.cardTitle)
-                            .foregroundStyle(.white)
-                        Text("AI simulated patient")
-                            .font(CouchTheme.Typography.caption)
-                            .foregroundStyle(.white.opacity(0.65))
-                    }
-                    Spacer()
-                    TimerPill(elapsed: elapsed)
-                }
-                .padding(.horizontal, CouchTheme.Spacing.lg)
-                .padding(.top, CouchTheme.Spacing.md)
-
-                Spacer()
-
-                if phase == .connecting {
-                    Text("Connecting…")
-                        .font(CouchTheme.Typography.bodyEmphasized)
-                        .foregroundStyle(.white.opacity(0.75))
-                        .padding(.bottom, CouchTheme.Spacing.md)
-                } else if agentMode == .speaking {
-                    Label("Speaking", systemImage: "waveform")
-                        .font(CouchTheme.Typography.pill)
-                        .foregroundStyle(CouchTheme.callCaption)
-                        .padding(.bottom, CouchTheme.Spacing.md)
-                } else if agentMode == .listening {
-                    Label("Listening", systemImage: "ear")
-                        .font(CouchTheme.Typography.pill)
-                        .foregroundStyle(.white.opacity(0.7))
-                        .padding(.bottom, CouchTheme.Spacing.md)
-                }
+            VStack(spacing: 2) {
+                Text(patientName)
+                    .font(CouchTheme.Typography.cardTitle)
+                    .foregroundStyle(.white)
+                Text("AI simulated patient")
+                    .font(CouchTheme.Typography.caption)
+                    .foregroundStyle(.white.opacity(0.7))
             }
-        }
-    }
+            .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(patientName), AI simulated patient")
 
-    @ViewBuilder
-    private var portraitBackground: some View {
-        let assetName = "scenario-\(scenario.id)"
-        if UIImage(named: assetName) != nil {
-            Image(assetName)
-                .resizable()
-                .scaledToFill()
-                .clipped()
-        } else {
-            ZStack {
-                LinearGradient(
-                    colors: [CouchTheme.callSurfaceMuted, CouchTheme.callSurface],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                Text(String(scenario.patientName.prefix(1)))
-                    .font(.system(size: 140, weight: .bold, design: .rounded))
-                    .foregroundStyle(Color.white.opacity(0.08))
-            }
+            Spacer(minLength: CouchTheme.Spacing.xs)
+
+            TimerPill(elapsed: elapsed)
         }
     }
 }
 
 private struct LivePill: View {
     let isLive: Bool
+    let reduceMotion: Bool
 
     var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(CouchTheme.danger)
-                .frame(width: 8, height: 8)
+        HStack(spacing: CouchTheme.Spacing.xs) {
+            Image(systemName: "record.circle.fill")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(CouchTheme.danger)
+                .symbolEffect(
+                    .variableColor.iterative.reversing,
+                    options: .repeating,
+                    isActive: isLive && !reduceMotion
+                )
+                .accessibilityHidden(true)
             Text(isLive ? "Live" : "•")
                 .font(CouchTheme.Typography.pill)
                 .foregroundStyle(.white)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Capsule().fill(CouchTheme.callSurfaceMuted.opacity(0.75)))
+        .padding(.horizontal, CouchTheme.Spacing.sm)
+        .padding(.vertical, CouchTheme.Spacing.xs)
+        .couchGlassCapsule()
+        .accessibilityLabel(isLive ? "Live" : "Connecting")
     }
 }
 
@@ -218,11 +202,116 @@ private struct TimerPill: View {
         Text(TimeFormatting.mmss(elapsed))
             .font(CouchTheme.Typography.pill.monospacedDigit())
             .foregroundStyle(.white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(Capsule().fill(CouchTheme.callSurfaceMuted.opacity(0.75)))
+            .contentTransition(.numericText(countsDown: false))
+            .padding(.horizontal, CouchTheme.Spacing.sm)
+            .padding(.vertical, CouchTheme.Spacing.xs)
+            .couchGlassCapsule()
+            .accessibilityLabel("Elapsed \(TimeFormatting.mmss(elapsed))")
     }
 }
+
+// MARK: - Connecting hint
+
+/// Subtle one-line hint shown beneath the header depending on phase.
+/// Uses a three-dot `phaseAnimator` when connecting, gated by Reduce Motion.
+private struct ConnectingHint: View {
+    let phase: SessionCoordinator.Phase
+    let agentMode: SessionCoordinator.AgentMode
+    let reduceMotion: Bool
+
+    var body: some View {
+        Group {
+            switch phase {
+            case .connecting:
+                connecting
+            case .live:
+                if agentMode == .speaking {
+                    hint(text: "Speaking", systemImage: "waveform", color: CouchTheme.callCaption)
+                } else if agentMode == .listening {
+                    hint(text: "Listening", systemImage: "ear", color: .white.opacity(0.75))
+                }
+            default:
+                EmptyView()
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var connecting: some View {
+        HStack(spacing: CouchTheme.Spacing.xs) {
+            Text("Connecting")
+                .font(CouchTheme.Typography.bodyEmphasized)
+                .foregroundStyle(.white.opacity(0.8))
+            if reduceMotion {
+                Text("…")
+                    .font(CouchTheme.Typography.bodyEmphasized)
+                    .foregroundStyle(.white.opacity(0.5))
+            } else {
+                AnimatedDots()
+            }
+        }
+        .accessibilityLabel("Connecting")
+    }
+
+    private func hint(text: String, systemImage: String, color: Color) -> some View {
+        Label(text, systemImage: systemImage)
+            .font(CouchTheme.Typography.pill)
+            .foregroundStyle(color)
+    }
+}
+
+private struct AnimatedDots: View {
+    var body: some View {
+        HStack(spacing: 3) {
+            dot(index: 0)
+            dot(index: 1)
+            dot(index: 2)
+        }
+        .accessibilityHidden(true)
+    }
+
+    private func dot(index: Int) -> some View {
+        Circle()
+            .fill(Color.white.opacity(0.7))
+            .frame(width: 5, height: 5)
+            .phaseAnimator([0.3, 1.0, 0.3]) { view, opacity in
+                view.opacity(opacity)
+            } animation: { _ in
+                .easeInOut(duration: 0.5).delay(Double(index) * 0.15)
+            }
+    }
+}
+
+// MARK: - Overlay transcript
+
+/// Transcript rendered as glass bubbles overlaid on the portrait. Applies
+/// a top-edge mask to fade incoming bubbles in from the photo, and a
+/// subtle scroll transition so bubbles settle with scale + opacity.
+private struct OverlayTranscript: View {
+    let turns: [DisplayTurn]
+    let scenario: Scenario
+
+    var body: some View {
+        TranscriptView(
+            turns: turns,
+            scenario: scenario,
+            appearance: .dark
+        )
+        .mask(
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0),
+                    .init(color: .black, location: 0.18),
+                    .init(color: .black, location: 1)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+}
+
+// MARK: - Error banner
 
 private struct ErrorBanner: View {
     let message: String
@@ -232,6 +321,7 @@ private struct ErrorBanner: View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.white)
+                .accessibilityHidden(true)
             Text(message)
                 .font(CouchTheme.Typography.body)
                 .foregroundStyle(.white)

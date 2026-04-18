@@ -1,7 +1,9 @@
 import SwiftUI
 
-/// Dark call-style control bar: two large red circular buttons (Mute / End) with
-/// tiny extras on the left for text-fallback and freeze help, surfaced via a sheet.
+/// In-call control bar. Mute is a neutral glass disc that turns red only
+/// when muted (matches the reference hierarchy: one red = End); End stays
+/// red. Secondary Stuck / Text chips use glass capsules so they stay
+/// legible over any portrait.
 struct CallControlBar: View {
     let isMuted: Bool
     let mode: SessionMode
@@ -11,23 +13,13 @@ struct CallControlBar: View {
     var onEnd: () -> Void
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: CouchTheme.Spacing.xs) {
             HStack(alignment: .top, spacing: 48) {
-                controlButton(
-                    systemImage: isMuted ? "mic.slash.fill" : "mic.fill",
-                    label: isMuted ? "Muted" : "Mute",
-                    filled: true,
-                    action: onMuteToggle
-                )
-                controlButton(
-                    systemImage: "phone.down.fill",
-                    label: "End",
-                    filled: true,
-                    action: onEnd
-                )
+                muteButton
+                endButton
             }
 
-            HStack(spacing: 24) {
+            HStack(spacing: CouchTheme.Spacing.lg) {
                 smallGhostButton(
                     systemImage: "lifepreserver",
                     label: "Stuck",
@@ -39,32 +31,69 @@ struct CallControlBar: View {
                     action: onTextPanel
                 )
             }
-            .padding(.top, 4)
+            .padding(.top, CouchTheme.Spacing.xxs)
         }
         .padding(.horizontal, CouchTheme.Spacing.lg)
         .padding(.bottom, CouchTheme.Spacing.md)
     }
 
-    @ViewBuilder
-    private func controlButton(systemImage: String, label: String, filled: Bool, action: @escaping () -> Void) -> some View {
-        VStack(spacing: 10) {
+    // MARK: - Primary buttons
+
+    private var muteButton: some View {
+        VStack(spacing: CouchTheme.Spacing.sm) {
             Button {
                 CouchHaptics.tap()
-                action()
+                onMuteToggle()
             } label: {
-                Image(systemName: systemImage)
-                    .font(.system(size: 28, weight: .bold))
+                Image(systemName: isMuted ? "mic.slash.fill" : "mic.fill")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(.white)
+                    .contentTransition(.symbolEffect(.replace))
+                    .frame(width: 72, height: 72)
+                    .background {
+                        if isMuted {
+                            Circle().fill(CouchTheme.danger)
+                        } else {
+                            Circle()
+                                .fill(Color.white.opacity(0.08))
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(Color.white.opacity(0.18), lineWidth: 1)
+                                )
+                        }
+                    }
+            }
+            .buttonStyle(.couchPress)
+            .accessibilityLabel(isMuted ? "Unmute microphone" : "Mute microphone")
+
+            Text(isMuted ? "Muted" : "Mute")
+                .font(CouchTheme.Typography.caption)
+                .foregroundStyle(.white.opacity(0.8))
+        }
+    }
+
+    private var endButton: some View {
+        VStack(spacing: CouchTheme.Spacing.sm) {
+            Button {
+                CouchHaptics.tap()
+                onEnd()
+            } label: {
+                Image(systemName: "phone.down.fill")
+                    .font(.system(size: 26, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(width: 72, height: 72)
                     .background(Circle().fill(CouchTheme.danger))
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(label)
-            Text(label)
+            .buttonStyle(.couchPress)
+            .accessibilityLabel("End session")
+
+            Text("End")
                 .font(CouchTheme.Typography.caption)
-                .foregroundStyle(.white.opacity(0.75))
+                .foregroundStyle(.white.opacity(0.8))
         }
     }
+
+    // MARK: - Secondary chips
 
     @ViewBuilder
     private func smallGhostButton(systemImage: String, label: String, action: @escaping () -> Void) -> some View {
@@ -72,20 +101,20 @@ struct CallControlBar: View {
             CouchHaptics.tap()
             action()
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: CouchTheme.Spacing.xs) {
                 Image(systemName: systemImage)
                     .font(.footnote.weight(.semibold))
+                    .accessibilityHidden(true)
                 Text(label)
                     .font(CouchTheme.Typography.pill)
             }
-            .foregroundStyle(.white.opacity(0.7))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                Capsule().fill(CouchTheme.callSurfaceMuted)
-            )
+            .foregroundStyle(.white.opacity(0.88))
+            .padding(.horizontal, CouchTheme.Spacing.md)
+            .padding(.vertical, CouchTheme.Spacing.xs + 2)
+            .couchGlassCapsule()
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.couchPress)
+        .accessibilityLabel(label)
     }
 }
 
@@ -108,8 +137,8 @@ struct CallTextPanel: View {
             TextField("Say it in words…", text: $draft, axis: .vertical)
                 .lineLimit(1...6)
                 .textFieldStyle(.plain)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 12)
+                .padding(.horizontal, CouchTheme.Spacing.md)
+                .padding(.vertical, CouchTheme.Spacing.sm + 2)
                 .background(
                     RoundedRectangle(cornerRadius: CouchTheme.Radius.option, style: .continuous)
                         .fill(CouchTheme.surfaceMuted)

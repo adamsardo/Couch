@@ -5,9 +5,10 @@ enum TranscriptAppearance {
     case dark
 }
 
-/// Renders the live conversation transcript. Supports light (post-session) and
-/// dark (in-call) appearances. Uses a stable identity for cheap diffing per
-/// SwiftUI ForEach correctness rules.
+/// Renders the live conversation transcript. Supports light (post-session)
+/// and dark (in-call, overlaid on portrait) appearances. Uses a stable
+/// identity for cheap diffing per SwiftUI ForEach correctness rules, and
+/// asymmetric entrance transitions so streaming turns rise into place.
 struct TranscriptView: View {
     let turns: [DisplayTurn]
     let scenario: Scenario
@@ -22,6 +23,8 @@ struct TranscriptView: View {
                             text: "\(scenario.patientName) is in the room. Start when you're ready — a simple opener is fine.",
                             appearance: appearance
                         )
+                        .id("empty")
+                        .transition(.opacity.animation(CouchMotion.entrance))
                     } else {
                         ForEach(turns) { turn in
                             TurnBubble(
@@ -30,15 +33,28 @@ struct TranscriptView: View {
                                 appearance: appearance
                             )
                             .id(turn.id)
+                            .scrollTransition(topLeading: .animated(.easeOut(duration: CouchMotion.small)),
+                                              bottomTrailing: .identity) { view, phase in
+                                view
+                                    .opacity(phase.isIdentity ? 1 : 0)
+                                    .offset(y: phase.isIdentity ? 0 : -8)
+                            }
+                            .transition(.asymmetric(
+                                insertion: .opacity
+                                    .combined(with: .offset(y: 12))
+                                    .animation(CouchMotion.entrance),
+                                removal: .opacity.animation(CouchMotion.exit)
+                            ))
                         }
                     }
                 }
                 .padding(.vertical, CouchTheme.Spacing.md)
                 .padding(.horizontal, CouchTheme.Spacing.md)
+                .animation(CouchMotion.stateChange, value: turns.count)
             }
             .onChange(of: turns.last?.id) { _, newID in
                 guard let newID else { return }
-                withAnimation(.easeOut(duration: 0.2)) {
+                withAnimation(CouchMotion.entrance) {
                     proxy.scrollTo(newID, anchor: .bottom)
                 }
             }
@@ -52,45 +68,43 @@ private struct TurnBubble: View {
     let appearance: TranscriptAppearance
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            switch appearance {
-            case .light:
-                lightBubble
-            case .dark:
-                darkBubble
-            }
+        switch appearance {
+        case .light:
+            lightBubble
+        case .dark:
+            darkBubble
         }
-        .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder
     private var lightBubble: some View {
         HStack {
             if turn.role == .user { Spacer(minLength: 32) }
-            VStack(alignment: turn.role == .user ? .trailing : .leading, spacing: 4) {
+            VStack(alignment: turn.role == .user ? .trailing : .leading, spacing: CouchTheme.Spacing.xxs) {
                 Text(label)
                     .font(CouchTheme.Typography.caption)
                     .foregroundStyle(CouchTheme.textMuted)
                 Text(turn.text)
                     .font(CouchTheme.Typography.body)
                     .foregroundStyle(CouchTheme.textPrimary)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
+                    .padding(.horizontal, CouchTheme.Spacing.md)
+                    .padding(.vertical, CouchTheme.Spacing.sm)
                     .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        RoundedRectangle(cornerRadius: CouchTheme.Radius.bubble, style: .continuous)
                             .fill(lightBackground)
                     )
                     .frame(maxWidth: 320, alignment: turn.role == .user ? .trailing : .leading)
             }
             if turn.role != .user { Spacer(minLength: 32) }
         }
+        .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder
     private var darkBubble: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: CouchTheme.Spacing.sm) {
             avatarBadge
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: CouchTheme.Spacing.xxs) {
                 Text(label)
                     .font(CouchTheme.Typography.caption.weight(.semibold))
                     .foregroundStyle(darkLabelColor)
@@ -99,8 +113,15 @@ private struct TurnBubble: View {
                     .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(.horizontal, CouchTheme.Spacing.md)
+            .padding(.vertical, CouchTheme.Spacing.sm)
+            .couchGlassRoundedRect(
+                radius: CouchTheme.Radius.bubble,
+                tint: turn.role == .user ? CouchTheme.primary.opacity(0.18) : nil
+            )
             Spacer(minLength: 0)
         }
+        .accessibilityElement(children: .combine)
     }
 
     private var avatarBadge: some View {
@@ -109,7 +130,7 @@ private struct TurnBubble: View {
             case .user:
                 Circle()
                     .fill(CouchTheme.primary)
-                    .frame(width: 24, height: 24)
+                    .frame(width: 26, height: 26)
                     .overlay(
                         Text("A")
                             .font(CouchTheme.Typography.caption.weight(.bold))
@@ -118,7 +139,7 @@ private struct TurnBubble: View {
             case .agent:
                 Circle()
                     .fill(CouchTheme.callCaption.opacity(0.3))
-                    .frame(width: 24, height: 24)
+                    .frame(width: 26, height: 26)
                     .overlay(
                         Text(String(patientName.prefix(1)))
                             .font(CouchTheme.Typography.caption.weight(.bold))
@@ -127,7 +148,7 @@ private struct TurnBubble: View {
             case .system:
                 Circle()
                     .fill(CouchTheme.warning.opacity(0.3))
-                    .frame(width: 24, height: 24)
+                    .frame(width: 26, height: 26)
                     .overlay(
                         Image(systemName: "lifepreserver")
                             .font(.caption2.weight(.bold))
@@ -135,6 +156,7 @@ private struct TurnBubble: View {
                     )
             }
         }
+        .accessibilityHidden(true)
     }
 
     private var label: String {
@@ -169,13 +191,27 @@ private struct EmptyStateBubble: View {
     var body: some View {
         Text(text)
             .font(CouchTheme.Typography.body)
-            .foregroundStyle(appearance == .dark ? Color.white.opacity(0.7) : CouchTheme.textSecondary)
+            .foregroundStyle(appearance == .dark ? Color.white.opacity(0.75) : CouchTheme.textSecondary)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
             .padding(CouchTheme.Spacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(appearance == .dark ? CouchTheme.callSurfaceMuted : CouchTheme.surfaceMuted)
+            .modifier(EmptyBubbleBackground(appearance: appearance))
+    }
+}
+
+private struct EmptyBubbleBackground: ViewModifier {
+    let appearance: TranscriptAppearance
+
+    func body(content: Content) -> some View {
+        let innerRadius = CouchTheme.Radius.inner(of: CouchTheme.Radius.bubble, padding: 2)
+        switch appearance {
+        case .dark:
+            content.couchGlassRoundedRect(radius: innerRadius)
+        case .light:
+            content.background(
+                RoundedRectangle(cornerRadius: innerRadius, style: .continuous)
+                    .fill(CouchTheme.surfaceMuted)
             )
+        }
     }
 }

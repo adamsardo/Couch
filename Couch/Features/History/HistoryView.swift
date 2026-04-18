@@ -5,6 +5,8 @@ struct HistoryView: View {
     @Query(sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
     @Query(sort: \StreakEvent.day, order: .reverse) private var streakEvents: [StreakEvent]
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private var streakDays: Int { StreakCounter.consecutiveDays(events: streakEvents) }
     private var completedSessions: [Session] { sessions.filter { $0.status == .completed } }
 
@@ -19,6 +21,14 @@ struct HistoryView: View {
                     } else {
                         ForEach(completedSessions) { session in
                             SessionHistoryRow(session: session)
+                                .scrollTransition(
+                                    topLeading: .animated(.easeOut(duration: CouchMotion.small)),
+                                    bottomTrailing: .animated(.easeIn(duration: CouchMotion.press))
+                                ) { view, phase in
+                                    view
+                                        .opacity(phase.isIdentity ? 1 : 0.8)
+                                        .scaleEffect(phase.isIdentity ? 1 : 0.97)
+                                }
                         }
                     }
                 }
@@ -36,6 +46,12 @@ struct HistoryView: View {
             Image(systemName: "sparkles")
                 .font(.system(size: 32))
                 .foregroundStyle(CouchTheme.primary)
+                .symbolEffect(
+                    .pulse,
+                    options: .repeating.speed(0.5),
+                    isActive: !reduceMotion
+                )
+                .accessibilityHidden(true)
             Text("No reps yet.")
                 .font(CouchTheme.Typography.cardTitle)
                 .foregroundStyle(CouchTheme.textPrimary)
@@ -46,6 +62,7 @@ struct HistoryView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, CouchTheme.Spacing.xl)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -53,7 +70,7 @@ private struct SessionHistoryRow: View {
     let session: Session
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: CouchTheme.Spacing.xs) {
             HStack {
                 Text(session.scenario?.patientName ?? "Rep")
                     .font(CouchTheme.Typography.cardTitle)
@@ -80,6 +97,7 @@ private struct SessionHistoryRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .couchGlassCard()
+        .accessibilityElement(children: .combine)
     }
 }
 

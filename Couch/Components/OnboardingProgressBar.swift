@@ -15,7 +15,7 @@ struct OnboardingProgressBar: View {
                     Capsule()
                         .fill(CouchTheme.primary)
                         .frame(width: proxy.size.width * clamped)
-                        .animation(.easeInOut(duration: 0.35), value: clamped)
+                        .animation(CouchMotion.progressFill, value: clamped)
                 }
             }
             .frame(height: 8)

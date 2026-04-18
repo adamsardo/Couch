@@ -9,16 +9,18 @@ struct RecentHighlightsCard: View {
                 .font(CouchTheme.Typography.caption)
                 .foregroundStyle(CouchTheme.success)
             ForEach(Array(strengths.prefix(3).enumerated()), id: \.offset) { _, strength in
-                HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: .top, spacing: CouchTheme.Spacing.sm - 2) {
                     Image(systemName: "checkmark")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(CouchTheme.success)
                         .frame(width: 18)
+                        .accessibilityHidden(true)
                     Text(strength)
                         .font(CouchTheme.Typography.body)
                         .foregroundStyle(CouchTheme.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .accessibilityElement(children: .combine)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

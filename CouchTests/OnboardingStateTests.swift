@@ -9,25 +9,25 @@ struct OnboardingStateTests {
     @Test
     func happyPathTransitions() {
         let state = OnboardingState()
-        state.advance(to: .safety)
-        state.advance(to: .quickProfile)
-        state.advance(to: .friction)
-        state.topStressor = .timePoor
-        state.advance(to: .scenarioRecommendation)
+        state.advance(to: .privacy)
+        state.advance(to: .stressors)
+        state.stressors = [.timePoor]
+        state.advance(to: .scenarioMatch)
         state.advance(to: .microphone)
         #expect(state.path.last == .microphone)
-        #expect(state.topStressor == .timePoor)
+        #expect(state.primaryStressor == .timePoor)
     }
 
     @Test
-    func skipQuickProfileClearsAndAdvances() {
+    func progressAdvancesAcrossSteps() {
         let state = OnboardingState()
-        state.yearLevel = .third
-        state.placementWindow = .thisSemester
-        state.skipQuickProfile()
-        #expect(state.yearLevel == nil)
-        #expect(state.placementWindow == nil)
-        #expect(state.path.last == .friction)
+        let earlier = state.progress(for: .name)
+        let middle = state.progress(for: .personalising)
+        let end = state.progress(for: .microphone)
+        #expect(earlier < middle)
+        #expect(middle < end)
+        #expect(end <= 1.0)
+        #expect(earlier >= 0.0)
     }
 
     @Test
@@ -41,7 +41,7 @@ struct OnboardingStateTests {
         let state = OnboardingState()
         state.yearLevel = .fourth
         state.placementWindow = .nextSemester
-        state.topStressor = .anxiety
+        state.stressors = [.anxiety]
         state.finish(saveTo: profile, in: context)
 
         #expect(profile.onboardedAt != nil)

@@ -13,7 +13,7 @@ struct CouchGlassCardStyle: ViewModifier {
             .padding(.horizontal, CouchTheme.Spacing.lg)
             .background(shape.fill(tint ?? CouchTheme.surface))
             .overlay(shape.strokeBorder(CouchTheme.divider, lineWidth: 1))
-            .shadow(color: CouchTheme.textPrimary.opacity(0.04), radius: 18, x: 0, y: 6)
+            .couchElevation(.md)
     }
 }
 

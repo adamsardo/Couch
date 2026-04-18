@@ -37,7 +37,7 @@ struct FreezeHelpSheet: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .couchGlassCard()
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.couchPress)
             }
             Spacer()
         }

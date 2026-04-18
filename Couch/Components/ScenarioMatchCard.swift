@@ -38,7 +38,7 @@ struct ScenarioMatchCard: View {
                 }
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.couchPress)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
     }

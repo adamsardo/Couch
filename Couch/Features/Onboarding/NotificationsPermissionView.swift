@@ -47,7 +47,7 @@ struct NotificationsPermissionView: View {
 
     private func notificationPreview(title: String, body: String, time: String) -> some View {
         HStack(alignment: .top, spacing: CouchTheme.Spacing.md) {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: CouchTheme.Radius.chip, style: .continuous)
                 .fill(CouchTheme.accentGradient)
                 .frame(width: 40, height: 40)
                 .overlay(
@@ -73,9 +73,9 @@ struct NotificationsPermissionView: View {
         }
         .padding(CouchTheme.Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: CouchTheme.Radius.bubble, style: .continuous)
                 .fill(CouchTheme.background)
-                .shadow(color: CouchTheme.textPrimary.opacity(0.06), radius: 12, x: 0, y: 4)
+                .couchElevation(.md)
         )
     }
 

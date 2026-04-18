@@ -3,13 +3,17 @@ import SwiftUI
 
 struct ScenarioMatchView: View {
     let state: OnboardingState
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.zoomNamespace) private var zoomNamespace
     @Query(sort: \Scenario.createdAt) private var scenarios: [Scenario]
 
     @State private var selectedID: String?
 
     var body: some View {
         VStack(spacing: CouchTheme.Spacing.lg) {
-            Text("We found your best-fit first rep")
+            header
+
+            Text("We found a best-fit first rep for you")
                 .font(CouchTheme.Typography.title)
                 .foregroundStyle(CouchTheme.textPrimary)
                 .multilineTextAlignment(.center)
@@ -18,33 +22,60 @@ struct ScenarioMatchView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: CouchTheme.Spacing.md) {
                     ForEach(cards, id: \.id) { card in
-                        ScenarioMatchCard(
-                            name: card.name,
-                            quote: card.quote,
-                            fit: card.fit,
-                            portraitAsset: card.portraitAsset,
-                            isSelected: selectedID == card.id,
-                            onTap: { select(card) }
-                        )
-                        .frame(width: 260)
+                        cardView(for: card)
                     }
                 }
                 .scrollTargetLayout()
-                .padding(.horizontal, CouchTheme.Spacing.lg)
+                .padding(.horizontal, CouchTheme.Spacing.xl)
             }
             .scrollTargetBehavior(.viewAligned)
 
-            Spacer()
+            Spacer(minLength: 0)
 
             PrimaryButton(title: "Choose", isEnabled: selectedID != nil) {
                 state.advance(to: .scenarioDetail)
             }
             .padding(.horizontal, CouchTheme.Spacing.lg)
         }
-        .padding(.vertical, CouchTheme.Spacing.lg)
+        .padding(.vertical, CouchTheme.Spacing.md)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(CouchTheme.background)
         .task { preselectBestFit() }
+    }
+
+    @ViewBuilder
+    private func cardView(for card: CardModel) -> some View {
+        let base = ScenarioMatchCard(
+            name: card.name,
+            quote: card.quote,
+            fit: card.fit,
+            portraitAsset: card.portraitAsset,
+            isSelected: selectedID == card.id,
+            onTap: { select(card) }
+        )
+        .frame(width: 280)
+        .scrollTransition(
+            topLeading: .animated(.easeOut(duration: CouchMotion.small)),
+            bottomTrailing: .animated(.easeIn(duration: CouchMotion.press))
+        ) { view, phase in
+            view
+                .opacity(phase.isIdentity ? 1 : 0.7)
+                .scaleEffect(phase.isIdentity ? 1 : 0.95)
+        }
+
+        if selectedID == card.id, let zoomNamespace {
+            base.matchedTransitionSource(id: "scenario-detail", in: zoomNamespace)
+        } else {
+            base
+        }
+    }
+
+    private var header: some View {
+        HStack {
+            FloatingBackButton(background: CouchTheme.surfaceMuted) { dismiss() }
+            Spacer()
+        }
+        .padding(.horizontal, CouchTheme.Spacing.md)
     }
 
     private func select(_ card: CardModel) {

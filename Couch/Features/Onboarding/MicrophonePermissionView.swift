@@ -4,6 +4,7 @@ struct MicrophonePermissionView: View {
     let state: OnboardingState
     var onComplete: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isRequesting = false
 
     var body: some View {
@@ -53,7 +54,18 @@ struct MicrophonePermissionView: View {
             Image(systemName: "mic.fill")
                 .font(.system(size: 90, weight: .bold))
                 .foregroundStyle(CouchTheme.accentGradient)
-                .shadow(color: CouchTheme.primary.opacity(0.3), radius: 18, x: 0, y: 10)
+                .couchElevation(.lg, tint: CouchTheme.primary)
+                .symbolEffect(
+                    .pulse,
+                    options: .repeating.speed(0.6),
+                    isActive: !reduceMotion && !isRequesting
+                )
+                .symbolEffect(
+                    .variableColor.iterative,
+                    options: .repeating,
+                    isActive: isRequesting
+                )
+                .accessibilityHidden(true)
         }
         .frame(height: 180)
         .padding(.top, CouchTheme.Spacing.md)

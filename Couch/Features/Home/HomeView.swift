@@ -40,6 +40,7 @@ struct HomeView: View {
                         remaining: max(0, weeklyRepsGoal - completedThisWeek),
                         onQuickRep: { startSession(with: scenario, mode: presentedSessionMode) }
                     )
+                    .homeCardScrollTransition()
                 }
 
                 StateOfMindSection(
@@ -47,25 +48,33 @@ struct HomeView: View {
                     repsGoal: weeklyRepsGoal,
                     onCheckup: { showCheckpoint = true }
                 )
+                .homeCardScrollTransition()
 
                 if profile.ahaShown == false, lastDebrief != nil, let stressor = profile.topStressor.flatMap(FrictionStressor.init) {
                     AhaMomentCard(stressor: stressor) {
                         profile.ahaShown = true
                         try? modelContext.save()
                     }
-                    .transition(.scale.combined(with: .opacity))
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.96)
+                            .combined(with: .opacity)
+                            .animation(.easeOut(duration: CouchMotion.small)),
+                        removal: .opacity.animation(.easeIn(duration: CouchMotion.press))
+                    ))
                 }
 
                 TodaysFocusCard(debrief: lastDebrief)
+                    .homeCardScrollTransition()
 
                 if let drill = lastDebrief {
                     RecentHighlightsCard(strengths: drill.strengths)
+                        .homeCardScrollTransition()
                 }
             }
             .padding(.horizontal, CouchTheme.Spacing.lg)
             .padding(.top, CouchTheme.Spacing.md)
             .padding(.bottom, CouchTheme.Spacing.xl)
-            .animation(.easeInOut(duration: 0.25), value: profile.ahaShown)
+            .animation(CouchMotion.stateChange, value: profile.ahaShown)
         }
         .background(CouchTheme.background.ignoresSafeArea())
         .fullScreenCover(item: $presentedScenario) { scenario in
@@ -98,7 +107,7 @@ private struct PatientHeroCard: View {
         HStack(alignment: .center, spacing: CouchTheme.Spacing.md) {
             avatarRing
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: CouchTheme.Spacing.xs) {
                 Text("Your AI patient")
                     .font(CouchTheme.Typography.caption)
                     .foregroundStyle(CouchTheme.textMuted)
@@ -110,21 +119,23 @@ private struct PatientHeroCard: View {
                     CouchHaptics.tap()
                     onQuickRep()
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: CouchTheme.Spacing.xs) {
                         Image(systemName: "waveform")
+                            .accessibilityHidden(true)
                         Text("Quick rep")
                             .font(CouchTheme.Typography.pill)
                     }
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, CouchTheme.Spacing.md)
+                    .padding(.vertical, CouchTheme.Spacing.sm - 2)
                     .background(Capsule().fill(CouchTheme.textPrimary))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.couchPress)
+                .accessibilityLabel("Start quick rep with \(scenario.patientName)")
             }
             Spacer()
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, CouchTheme.Spacing.sm - 2)
     }
 
     private var avatarRing: some View {
@@ -134,29 +145,14 @@ private struct PatientHeroCard: View {
                 .stroke(CouchTheme.success, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                 .frame(width: 74, height: 74)
                 .rotationEffect(.degrees(-90))
+                .accessibilityHidden(true)
 
-            Circle()
-                .fill(CouchTheme.surfaceMuted)
-                .frame(width: 60, height: 60)
-                .overlay(
-                    Group {
-                        let asset = "scenario-\(scenario.id)"
-                        if UIImage(named: asset) != nil {
-                            Image(asset)
-                                .resizable()
-                                .scaledToFill()
-                                .clipShape(Circle())
-                        } else {
-                            Text(String(scenario.patientName.prefix(1)))
-                                .font(CouchTheme.Typography.cardTitle)
-                                .foregroundStyle(CouchTheme.textPrimary)
-                        }
-                    }
-                )
+            ScenarioPortraitView(scenario: scenario, crop: .avatar(60))
         }
         .overlay(alignment: .bottom) {
             Text("\(remaining) reps left")
-                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .font(.system(size: 10, weight: .semibold, design: .rounded).monospacedDigit())
+                .contentTransition(.numericText())
                 .foregroundStyle(CouchTheme.textSecondary)
                 .offset(y: 16)
         }
@@ -181,6 +177,7 @@ private struct StateOfMindSection: View {
                     title: "Complete \(repsGoal) reps",
                     trailing: "\(min(repsDone, repsGoal))/\(repsGoal)",
                     trailingColor: CouchTheme.textSecondary,
+                    trailingMonospaced: true,
                     done: repsDone >= repsGoal
                 )
                 Divider().overlay(CouchTheme.divider)
@@ -193,7 +190,7 @@ private struct StateOfMindSection: View {
             }
             .padding(CouchTheme.Spacing.md)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: CouchTheme.Radius.panel, style: .continuous)
                     .fill(CouchTheme.surfaceMuted)
             )
 
@@ -204,26 +201,55 @@ private struct StateOfMindSection: View {
     }
 
     @ViewBuilder
-    private func row(title: String, trailing: String?, trailingColor: Color, done: Bool = false, action: (() -> Void)? = nil) -> some View {
+    private func row(
+        title: String,
+        trailing: String?,
+        trailingColor: Color,
+        trailingMonospaced: Bool = false,
+        done: Bool = false,
+        action: (() -> Void)? = nil
+    ) -> some View {
         HStack(spacing: CouchTheme.Spacing.md) {
             Image(systemName: done ? "checkmark.circle.fill" : "circle")
                 .font(.title3)
                 .foregroundStyle(done ? CouchTheme.success : CouchTheme.textMuted)
+                .symbolEffect(.bounce, value: done)
+                .contentTransition(.symbolEffect(.replace))
+                .accessibilityHidden(true)
             Text(title)
                 .font(CouchTheme.Typography.bodyEmphasized)
                 .foregroundStyle(CouchTheme.textPrimary)
             Spacer()
             if let trailing {
                 Text(trailing)
-                    .font(CouchTheme.Typography.bodyEmphasized)
+                    .font(
+                        trailingMonospaced
+                            ? CouchTheme.Typography.bodyEmphasized.monospacedDigit()
+                            : CouchTheme.Typography.bodyEmphasized
+                    )
+                    .contentTransition(trailingMonospaced ? .numericText() : .identity)
                     .foregroundStyle(trailingColor)
             } else if let action {
-                Button("Start", action: action)
-                    .font(CouchTheme.Typography.bodyEmphasized)
-                    .foregroundStyle(CouchTheme.primary)
+                Button {
+                    CouchHaptics.tap()
+                    action()
+                } label: {
+                    Text("Start")
+                        .font(CouchTheme.Typography.pill)
+                        .foregroundStyle(CouchTheme.primary)
+                        .padding(.horizontal, CouchTheme.Spacing.md)
+                        .padding(.vertical, CouchTheme.Spacing.xs + 1)
+                        .background(
+                            Capsule().fill(Color.white)
+                                .couchElevation(.sm)
+                        )
+                }
+                .buttonStyle(.couchPress)
+                .accessibilityLabel("Start \(title)")
             }
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, CouchTheme.Spacing.sm)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -239,10 +265,11 @@ private struct TodaysFocusCard: View {
                 .foregroundStyle(CouchTheme.textPrimary)
 
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.md) {
-                HStack(spacing: 8) {
+                HStack(spacing: CouchTheme.Spacing.xs + 2) {
                     chip(text: "Timing")
                     chip(text: "~10 min")
                 }
+                .accessibilityElement(children: .combine)
                 Text(title)
                     .font(.system(.title2, design: .rounded, weight: .bold))
                     .foregroundStyle(.white)
@@ -253,7 +280,7 @@ private struct TodaysFocusCard: View {
             .padding(CouchTheme.Spacing.lg)
             .frame(minHeight: 180, alignment: .bottomLeading)
             .background(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                RoundedRectangle(cornerRadius: CouchTheme.Radius.sheet, style: .continuous)
                     .fill(CouchTheme.accentGradient)
             )
         }
@@ -263,8 +290,8 @@ private struct TodaysFocusCard: View {
         Text(text)
             .font(CouchTheme.Typography.caption.weight(.semibold))
             .foregroundStyle(.white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
+            .padding(.horizontal, CouchTheme.Spacing.sm)
+            .padding(.vertical, CouchTheme.Spacing.xxs)
             .background(Capsule().fill(.white.opacity(0.22)))
     }
 
@@ -273,38 +300,6 @@ private struct TodaysFocusCard: View {
             return debrief.microDrillTitle
         }
         return "When to Reflect (And When Silence Works Better)"
-    }
-}
-
-// MARK: - Session container
-
-private struct SessionContainer: View {
-    let scenario: Scenario
-    let mode: SessionMode
-    var onClose: () -> Void
-
-    var body: some View {
-        NavigationStack {
-            SessionIntroBridge(scenario: scenario, mode: mode, onClose: onClose)
-        }
-    }
-}
-
-private struct SessionIntroBridge: View {
-    let scenario: Scenario
-    let mode: SessionMode
-    var onClose: () -> Void
-
-    @State private var didStart = false
-
-    var body: some View {
-        if didStart {
-            ConversationView(scenario: scenario, mode: mode, onClose: onClose)
-        } else {
-            SessionIntroView(scenario: scenario) {
-                didStart = true
-            }
-        }
     }
 }
 
@@ -350,6 +345,23 @@ private struct ConfidenceCheckupSheet: View {
         .padding(CouchTheme.Spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(CouchTheme.background)
+    }
+}
+
+// MARK: - Scroll transition helper
+
+private extension View {
+    /// Subtle depth for Home cards: settle into place on entry, soften on
+    /// scroll-out. Works for vertical scrolling only.
+    func homeCardScrollTransition() -> some View {
+        scrollTransition(
+            topLeading: .animated(.easeOut(duration: CouchMotion.small)),
+            bottomTrailing: .animated(.easeIn(duration: CouchMotion.press))
+        ) { view, phase in
+            view
+                .opacity(phase.isIdentity ? 1 : 0.85)
+                .scaleEffect(phase.isIdentity ? 1 : 0.97)
+        }
     }
 }
 

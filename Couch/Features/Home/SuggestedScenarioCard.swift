@@ -13,6 +13,7 @@ struct SuggestedScenarioCard: View {
                 Image(systemName: "person.crop.circle.fill")
                     .font(.system(size: 36))
                     .foregroundStyle(CouchTheme.primary)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(scenario.patientName), \(scenario.patientAge)")
                         .font(CouchTheme.Typography.cardTitle)
@@ -44,10 +45,11 @@ struct SuggestedScenarioCard: View {
                     Spacer()
                     Image(systemName: "arrow.right")
                         .foregroundStyle(CouchTheme.primaryStrong)
+                        .accessibilityHidden(true)
                 }
                 .padding(.top, 8)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.couchPress)
             .accessibilityLabel("Start session with \(scenario.patientName)")
         }
         .frame(maxWidth: .infinity, alignment: .leading)

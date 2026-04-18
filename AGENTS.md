@@ -49,3 +49,11 @@ Use the shared `Couch` scheme unless a task explicitly needs target-level comman
 - Treat unrelated working-tree changes as user work.
 - Do not revert or overwrite changes you did not make.
 - Keep generated files, derived data, and local machine artifacts out of commits unless explicitly requested.
+
+## External UI/UX skill
+
+The [`userinterface-wiki`](https://github.com/raphaelsalaja/userinterface-wiki) skill is installed globally at `~/.agents/skills/userinterface-wiki/` (152 rules across animation, visual design, typography, laws of UX, etc.). It is written for web, but a transferable subset applies to this SwiftUI app.
+
+- SwiftUI-specific audit and prioritized fix list: [`Couch/docs/userinterface-wiki-audit.md`](Couch/docs/userinterface-wiki-audit.md).
+- When animating, theming, or adding interactive surfaces, consult the audit first, then open the relevant `~/.agents/skills/userinterface-wiki/rules/<rule-id>.md` for the rationale before implementing.
+- Rules the audit flags as `N/A (web-only)` (CSS pseudo-elements, Web Audio, predictive prefetching) should be ignored for this app.

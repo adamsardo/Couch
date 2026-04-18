@@ -9,12 +9,13 @@ struct NextMovesCard: View {
                 .font(CouchTheme.Typography.cardTitle)
                 .foregroundStyle(CouchTheme.primary)
             ForEach(Array(items.enumerated()), id: \.offset) { index, move in
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .top, spacing: CouchTheme.Spacing.sm + 2) {
                     Text("\(index + 1)")
                         .font(.headline.monospacedDigit())
                         .foregroundStyle(CouchTheme.surface)
                         .frame(width: 26, height: 26)
                         .background(Circle().fill(CouchTheme.primary))
+                        .accessibilityHidden(true)
                     Text(move)
                         .font(CouchTheme.Typography.body)
                         .foregroundStyle(CouchTheme.textPrimary)

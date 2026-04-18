@@ -75,7 +75,8 @@ struct PrivacyConsentView: View {
             Image(systemName: "shield.lefthalf.filled")
                 .font(.system(size: 110, weight: .bold))
                 .foregroundStyle(CouchTheme.accentGradient)
-                .shadow(color: CouchTheme.primary.opacity(0.35), radius: 20, x: 0, y: 10)
+                .couchElevation(.lg, tint: CouchTheme.primary)
+                .accessibilityHidden(true)
         }
         .frame(height: 200)
     }

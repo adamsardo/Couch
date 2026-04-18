@@ -1,16 +1,26 @@
 import SwiftUI
 
 /// 2-column grid of university logos shown on the social-proof marketing screen.
-/// Image assets live in `Assets.xcassets` under the names in `logoAssetNames`.
+/// Image assets live in `Assets.xcassets` under each entry's `assetName`.
 struct SocialProofGrid: View {
-    var caption: String = "Our method based on best works from"
-    var logoAssetNames: [String] = [
-        "uni-stanford",
-        "uni-boston",
-        "uni-humboldt",
-        "uni-michiganstate",
-        "uni-harvard",
-        "uni-nationallouis"
+    struct University: Identifiable, Equatable {
+        let id = UUID()
+        let displayName: String
+        let assetName: String
+    }
+
+    var caption: String = "Our method draws on evidence from"
+    var universities: [University] = SocialProofGrid.go8
+
+    /// Australian Group of Eight research-intensive universities, chosen for their
+    /// strong psychology and clinical-training programs.
+    static let go8: [University] = [
+        University(displayName: "University of Melbourne", assetName: "uni-melbourne"),
+        University(displayName: "University of Sydney", assetName: "uni-sydney"),
+        University(displayName: "UNSW Sydney", assetName: "uni-unsw"),
+        University(displayName: "Monash University", assetName: "uni-monash"),
+        University(displayName: "University of Queensland", assetName: "uni-uq"),
+        University(displayName: "Australian National University", assetName: "uni-anu")
     ]
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible())]
@@ -23,8 +33,8 @@ struct SocialProofGrid: View {
                 .multilineTextAlignment(.center)
 
             LazyVGrid(columns: columns, spacing: CouchTheme.Spacing.lg) {
-                ForEach(logoAssetNames, id: \.self) { name in
-                    LogoTile(assetName: name)
+                ForEach(universities) { uni in
+                    LogoTile(university: uni)
                 }
             }
         }
@@ -32,12 +42,12 @@ struct SocialProofGrid: View {
 }
 
 private struct LogoTile: View {
-    let assetName: String
+    let university: SocialProofGrid.University
 
     var body: some View {
         Group {
-            if UIImage(named: assetName) != nil {
-                Image(assetName)
+            if UIImage(named: university.assetName) != nil {
+                Image(university.assetName)
                     .resizable()
                     .renderingMode(.original)
                     .scaledToFit()
@@ -47,25 +57,21 @@ private struct LogoTile: View {
         }
         .frame(height: 56)
         .frame(maxWidth: .infinity)
+        .accessibilityLabel(university.displayName)
     }
 
     private var placeholder: some View {
         HStack(spacing: 8) {
             Image(systemName: "graduationcap.fill")
                 .foregroundStyle(CouchTheme.textSecondary)
-            Text(humanized)
+                .accessibilityHidden(true)
+            Text(university.displayName)
                 .font(CouchTheme.Typography.caption)
                 .foregroundStyle(CouchTheme.textSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .lineLimit(2)
+                .minimumScaleFactor(0.75)
+                .multilineTextAlignment(.leading)
         }
-    }
-
-    private var humanized: String {
-        assetName
-            .replacingOccurrences(of: "uni-", with: "")
-            .replacingOccurrences(of: "-", with: " ")
-            .capitalized
     }
 }
 

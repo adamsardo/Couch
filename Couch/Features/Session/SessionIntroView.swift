@@ -1,96 +1,178 @@
 import SwiftUI
 
+/// Editorial session-intro screen. Full-bleed portrait hero, eyebrow +
+/// wrapped title (no more `…wit…` truncation), SubtitlePill, italic quote,
+/// compact chip strip, and a pinned primary CTA via `safeAreaInset`.
 struct SessionIntroView: View {
     let scenario: Scenario
+    /// Namespace for zoom navigation transitions. The CTA becomes the
+    /// `matchedTransitionSource`; the presenting container's conversation
+    /// view calls `.navigationTransition(.zoom(sourceID: "session-start", in: namespace))`.
+    var transitionNamespace: Namespace.ID?
+    var onBack: (() -> Void)? = nil
     var onStart: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            hero
-                .frame(height: 360)
+        ScrollView {
+            VStack(spacing: 0) {
+                hero
+                    .containerRelativeFrame(.vertical) { length, _ in length * 0.58 }
 
-            VStack(alignment: .leading, spacing: CouchTheme.Spacing.md) {
-                Text("First rep \u{2014} Session 1 with \(scenario.patientName)")
-                    .font(CouchTheme.Typography.title)
-                    .foregroundStyle(CouchTheme.textPrimary)
-
-                VStack(spacing: CouchTheme.Spacing.sm) {
-                    infoRow(icon: "clock", title: "Duration", value: "~10 minutes")
-                    infoRow(icon: "target", title: "Main goal", value: "Stay curious, not certain")
-                    infoRow(icon: "flag.checkered", title: "Outcome", value: "Debrief with 3 next moves")
-                }
-
-                Spacer()
-
-                SecondaryButton(title: "Plan conversation", systemImage: "clock") {}
-                PrimaryButton(title: "Start conversation", systemImage: "play.fill") {
-                    onStart()
-                }
-            }
-            .padding(CouchTheme.Spacing.lg)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: CouchTheme.Radius.sheet,
-                    topTrailingRadius: CouchTheme.Radius.sheet
-                )
-                .fill(CouchTheme.background)
-                .ignoresSafeArea(edges: .bottom)
-            )
-            .offset(y: -CouchTheme.Radius.sheet)
-        }
-        .background(Color.black)
-    }
-
-    @ViewBuilder
-    private var hero: some View {
-        let assetName = "scenario-\(scenario.id)"
-        ZStack {
-            if UIImage(named: assetName) != nil {
-                Image(assetName)
-                    .resizable()
-                    .scaledToFill()
-                    .clipped()
-            } else {
-                ZStack {
-                    LinearGradient(
-                        colors: [CouchTheme.callSurfaceMuted, CouchTheme.callSurface],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    Text(String(scenario.patientName.prefix(1)))
-                        .font(.system(size: 160, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.white.opacity(0.1))
-                }
+                sheetCard
+                    .offset(y: -CouchTheme.Radius.sheet)
+                    .padding(.bottom, -CouchTheme.Radius.sheet)
             }
         }
-        .frame(maxWidth: .infinity)
+        .scrollIndicators(.hidden)
+        .background(CouchTheme.background.ignoresSafeArea())
         .ignoresSafeArea(edges: .top)
+        .safeAreaInset(edge: .bottom) {
+            startButton
+                .padding(.horizontal, CouchTheme.Spacing.lg)
+                .padding(.vertical, CouchTheme.Spacing.md)
+                .background(CouchTheme.background.opacity(0.98))
+        }
+        .overlay(alignment: .topLeading) {
+            if let onBack {
+                FloatingBackButton(action: onBack)
+                    .padding(.leading, CouchTheme.Spacing.md)
+                    .padding(.top, CouchTheme.Spacing.sm)
+            }
+        }
     }
 
-    private func infoRow(icon: String, title: String, value: String) -> some View {
-        HStack(spacing: CouchTheme.Spacing.md) {
-            Image(systemName: icon)
-                .font(.footnote.weight(.bold))
-                .foregroundStyle(CouchTheme.textPrimary)
-                .frame(width: 34, height: 34)
-                .background(Circle().fill(CouchTheme.surfaceMuted))
+    // MARK: - Hero
 
-            VStack(alignment: .leading, spacing: 0) {
-                Text(title)
-                    .font(CouchTheme.Typography.caption)
-                    .foregroundStyle(CouchTheme.textMuted)
-                Text(value)
-                    .font(CouchTheme.Typography.bodyEmphasized)
-                    .foregroundStyle(CouchTheme.textPrimary)
-            }
-            Spacer()
+    private var hero: some View {
+        ScenarioPortraitView(
+            scenario: scenario,
+            crop: .topFocused,
+            overlays: [.bottomScrim]
+        )
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Sheet card
+
+    private var sheetCard: some View {
+        VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
+            eyebrow
+            title
+            SubtitlePill(
+                title: scenario.title.capitalized,
+                subtitle: "AI-simulated patient. Not a real person.",
+                outerRadius: CouchTheme.Radius.sheet,
+                outerPadding: CouchTheme.Spacing.lg
+            )
+            quote
+            chipStrip
         }
-        .padding(.horizontal, CouchTheme.Spacing.md)
-        .padding(.vertical, 10)
+        .padding(.horizontal, CouchTheme.Spacing.lg)
+        .padding(.top, CouchTheme.Spacing.lg)
+        .padding(.bottom, CouchTheme.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: CouchTheme.Radius.option, style: .continuous)
-                .strokeBorder(CouchTheme.divider, lineWidth: 1)
+            UnevenRoundedRectangle(
+                topLeadingRadius: CouchTheme.Radius.sheet,
+                topTrailingRadius: CouchTheme.Radius.sheet,
+                style: .continuous
+            )
+            .fill(CouchTheme.background)
         )
     }
+
+    private var eyebrow: some View {
+        Text("SESSION 1 · FIRST REP")
+            .font(CouchTheme.Typography.eyebrow)
+            .textCase(.uppercase)
+            .kerning(1.2)
+            .foregroundStyle(CouchTheme.textMuted)
+            .accessibilityLabel("Session 1, first rep")
+    }
+
+    private var title: some View {
+        Text("Warm-up with \(scenario.patientName)")
+            .font(CouchTheme.Typography.display)
+            .foregroundStyle(CouchTheme.textPrimary)
+            .lineLimit(2)
+            .minimumScaleFactor(0.85)
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var quote: some View {
+        Text("\u{201C}\(scenario.openingCue)\u{201D}")
+            .font(CouchTheme.Typography.body)
+            .italic()
+            .foregroundStyle(CouchTheme.textPrimary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+    }
+
+    /// Compact horizontal chip strip. `ViewThatFits` wraps onto two rows
+    /// gracefully at XXL Dynamic Type so nothing truncates.
+    private var chipStrip: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: CouchTheme.Spacing.sm) {
+                chip(icon: "clock", text: "~10 min")
+                chip(icon: "target", text: "Stay curious")
+                chip(icon: "flag.checkered", text: "3 next moves")
+            }
+            VStack(alignment: .leading, spacing: CouchTheme.Spacing.xs) {
+                HStack(spacing: CouchTheme.Spacing.sm) {
+                    chip(icon: "clock", text: "~10 min")
+                    chip(icon: "target", text: "Stay curious")
+                }
+                chip(icon: "flag.checkered", text: "3 next moves")
+            }
+        }
+    }
+
+    private func chip(icon: String, text: String) -> some View {
+        HStack(spacing: CouchTheme.Spacing.xs) {
+            Image(systemName: icon)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(CouchTheme.textPrimary)
+                .accessibilityHidden(true)
+            Text(text)
+                .font(CouchTheme.Typography.caption.weight(.semibold))
+                .foregroundStyle(CouchTheme.textPrimary)
+                .minimumScaleFactor(0.9)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, CouchTheme.Spacing.md)
+        .padding(.vertical, CouchTheme.Spacing.xs + 2)
+        .background(
+            Capsule().fill(CouchTheme.surfaceMuted)
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - CTA
+
+    @ViewBuilder
+    private var startButton: some View {
+        let button = PrimaryButton(title: "Start conversation", systemImage: "play.fill") {
+            onStart()
+        }
+        if let ns = transitionNamespace {
+            button.matchedTransitionSource(id: "session-start", in: ns)
+        } else {
+            button
+        }
+    }
+}
+
+#Preview {
+    let scenario = Scenario(
+        id: "marcus-intake",
+        title: "First-session intake",
+        patientName: "Marcus",
+        patientAge: 28,
+        summary: "His partner referred him. He doesn't want to be here. Stay curious, stay calm.",
+        openingCue: "Marcus walks in, sits down without a word, and waits for you to start.",
+        calmingCue: "Take a breath. Curiosity, not certainty.",
+        elevenLabsAgentId: ""
+    )
+    return SessionIntroView(scenario: scenario, onStart: {})
 }

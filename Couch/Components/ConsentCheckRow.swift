@@ -23,7 +23,7 @@ struct ConsentCheckRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.couchPress)
         .accessibilityAddTraits(isChecked ? [.isSelected, .isButton] : .isButton)
     }
 }

@@ -9,15 +9,17 @@ struct StrengthsCard: View {
                 .font(CouchTheme.Typography.cardTitle)
                 .foregroundStyle(CouchTheme.success)
             ForEach(Array(strengths.enumerated()), id: \.offset) { _, strength in
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .top, spacing: CouchTheme.Spacing.sm + 2) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(CouchTheme.success)
                         .font(.title3)
+                        .accessibilityHidden(true)
                     Text(strength)
                         .font(CouchTheme.Typography.body)
                         .foregroundStyle(CouchTheme.textPrimary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .accessibilityElement(children: .combine)
             }
         }
         .frame(maxWidth: .infinity)

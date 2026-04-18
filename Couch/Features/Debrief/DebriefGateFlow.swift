@@ -44,7 +44,12 @@ struct DebriefGateFlow: View {
                               dismiss: onComplete)
         case .ready:
             if let payload = coordinator.payload {
-                DebriefStepsView(coordinator: coordinator, payload: payload, onComplete: onComplete)
+                DebriefStepsView(
+                    coordinator: coordinator,
+                    payload: payload,
+                    snapshot: snapshot,
+                    onComplete: onComplete
+                )
             }
         }
     }
@@ -53,31 +58,49 @@ struct DebriefGateFlow: View {
 private struct DebriefStepsView: View {
     @Bindable var coordinator: DebriefCoordinator
     let payload: DebriefPayload
+    let snapshot: SessionSnapshot
     var onComplete: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
             DebriefHeader(step: coordinator.step)
+
             ScrollView {
                 VStack(spacing: CouchTheme.Spacing.lg) {
-                    switch coordinator.step {
-                    case .strengths:
-                        StrengthsCard(strengths: payload.strengths)
-                    case .nextMoves:
-                        NextMovesCard(items: payload.nextMoves)
-                    case .microDrill:
-                        MicroDrillCard(payload: payload.microDrill)
-                    case .confidence:
-                        ConfidenceCheckpointView(coordinator: coordinator)
-                    case .completed:
-                        CompletionView(onComplete: onComplete)
-                    }
+                    stepContent
+                        .transition(.asymmetric(
+                            insertion: .opacity
+                                .combined(with: .offset(x: 20))
+                                .animation(.easeOut(duration: CouchMotion.state)),
+                            removal: .opacity
+                                .combined(with: .offset(x: -20))
+                                .animation(.easeIn(duration: CouchMotion.press))
+                        ))
+                        .id(coordinator.step)
                 }
                 .padding(.horizontal, CouchTheme.Spacing.lg)
                 .padding(.top, CouchTheme.Spacing.md)
                 .padding(.bottom, CouchTheme.Spacing.xl)
+                .animation(CouchMotion.stateChange, value: coordinator.step)
             }
+
             footerControls
+        }
+    }
+
+    @ViewBuilder
+    private var stepContent: some View {
+        switch coordinator.step {
+        case .strengths:
+            StrengthsCard(strengths: payload.strengths)
+        case .nextMoves:
+            NextMovesCard(items: payload.nextMoves)
+        case .microDrill:
+            MicroDrillCard(payload: payload.microDrill)
+        case .confidence:
+            ConfidenceCheckpointView(coordinator: coordinator)
+        case .completed:
+            CompletionView(snapshot: snapshot, payload: payload, onComplete: onComplete)
         }
     }
 
@@ -111,15 +134,16 @@ private struct DebriefHeader: View {
     let step: DebriefCoordinator.Step
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: CouchTheme.Spacing.xs) {
             Text(headline)
                 .font(CouchTheme.Typography.title)
                 .foregroundStyle(CouchTheme.textPrimary)
             Text(subtitle)
                 .font(CouchTheme.Typography.caption)
                 .foregroundStyle(CouchTheme.textSecondary)
+                .multilineTextAlignment(.center)
             ProgressBar(step: step)
-                .padding(.top, 8)
+                .padding(.top, CouchTheme.Spacing.xs + 2)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, CouchTheme.Spacing.lg)
@@ -160,6 +184,16 @@ private struct ProgressBar: View {
         }
     }
 
+    private var stepIndex: Int {
+        switch step {
+        case .strengths: return 1
+        case .nextMoves: return 2
+        case .microDrill: return 3
+        case .confidence: return 4
+        case .completed: return 5
+        }
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
@@ -169,30 +203,41 @@ private struct ProgressBar: View {
                         colors: [CouchTheme.primary, CouchTheme.accent],
                         startPoint: .leading, endPoint: .trailing))
                     .frame(width: geo.size.width * progress, height: 6)
-                    .animation(.easeOut(duration: 0.3), value: progress)
+                    .animation(CouchMotion.progressFill, value: progress)
             }
         }
         .frame(height: 6)
         .frame(maxWidth: 220)
+        .accessibilityValue("Step \(stepIndex) of 5")
     }
 }
 
+// MARK: - Completion celebration
+
 private struct CompletionView: View {
+    let snapshot: SessionSnapshot
+    let payload: DebriefPayload
     var onComplete: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var appeared = false
 
     var body: some View {
         VStack(spacing: CouchTheme.Spacing.lg) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 56))
-                .foregroundStyle(CouchTheme.accent)
+            hero
+
             Text("Reps compound from here.")
                 .font(CouchTheme.Typography.title)
                 .foregroundStyle(CouchTheme.textPrimary)
                 .multilineTextAlignment(.center)
+
             Text("You can do another one now or save this one as today's win.")
                 .font(CouchTheme.Typography.body)
                 .foregroundStyle(CouchTheme.textSecondary)
                 .multilineTextAlignment(.center)
+
+            metricStrip
+
             VStack(spacing: CouchTheme.Spacing.sm) {
                 PrimaryButton(title: "Do another rep", systemImage: "arrow.clockwise") {
                     onComplete()
@@ -205,6 +250,64 @@ private struct CompletionView: View {
         }
         .frame(maxWidth: .infinity)
         .couchGlassCard()
+        .task {
+            // Trigger bounce on arrival.
+            try? await Task.sleep(for: .milliseconds(120))
+            appeared = true
+        }
+    }
+
+    private var hero: some View {
+        ZStack {
+            Circle()
+                .fill(CouchTheme.primary.opacity(0.12))
+                .frame(width: 110, height: 110)
+            Image(systemName: "sparkles")
+                .font(.system(size: 48, weight: .bold))
+                .foregroundStyle(CouchTheme.primary)
+                .symbolEffect(.bounce, value: appeared)
+                .symbolEffect(
+                    .pulse.byLayer,
+                    options: .repeating.speed(0.4),
+                    isActive: !reduceMotion
+                )
+                .accessibilityHidden(true)
+        }
+        .accessibilityLabel("Session complete")
+    }
+
+    private var metricStrip: some View {
+        HStack(spacing: CouchTheme.Spacing.lg) {
+            metric(value: TimeFormatting.mmss(snapshot.elapsed), label: "Elapsed")
+            Divider().frame(height: 28)
+            metric(value: "\(snapshot.turns.count)", label: "Turns")
+            Divider().frame(height: 28)
+            metric(value: "\(payload.strengths.count)", label: "Strengths")
+        }
+        .padding(.vertical, CouchTheme.Spacing.sm)
+        .padding(.horizontal, CouchTheme.Spacing.md)
+        .background(
+            RoundedRectangle(
+                cornerRadius: CouchTheme.Radius.inner(of: CouchTheme.Radius.card, padding: CouchTheme.Spacing.lg),
+                style: .continuous
+            )
+            .fill(CouchTheme.surfaceMuted)
+        )
+    }
+
+    private func metric(value: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(CouchTheme.Typography.cardTitle.monospacedDigit())
+                .foregroundStyle(CouchTheme.textPrimary)
+                .contentTransition(.numericText())
+            Text(label)
+                .font(CouchTheme.Typography.caption)
+                .foregroundStyle(CouchTheme.textMuted)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 }
 
@@ -218,6 +321,7 @@ private struct DebriefErrorView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 48))
                 .foregroundStyle(CouchTheme.warning)
+                .accessibilityHidden(true)
             Text("Couldn't generate your debrief")
                 .font(CouchTheme.Typography.title)
             Text(message)

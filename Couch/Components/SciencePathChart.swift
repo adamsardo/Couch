@@ -1,114 +1,218 @@
-import Charts
 import SwiftUI
 
-/// Marketing chart comparing a regular-practice curve to a trial-and-error curve,
-/// with two annotation pills matching the LovOn self-growth screenshot.
+/// Marketing chart showing two trajectories over three months:
+/// - Orange: regular short reps → "Calm under pressure"
+/// - Gray: trial-and-error → "Stuck"
+///
+/// Drawn with two custom `Path`s over a normalized coordinate system so
+/// annotation pills, end dots, and labels all align with the curves regardless
+/// of the host width.
 struct SciencePathChart: View {
-    private struct Point: Identifiable {
-        let id = UUID()
-        let series: String
-        let x: Double
-        let y: Double
-    }
-
-    private let orangePoints: [Point] = [
-        Point(series: "With Couch", x: 0, y: 0.2),
-        Point(series: "With Couch", x: 0.35, y: 0.28),
-        Point(series: "With Couch", x: 0.65, y: 0.5),
-        Point(series: "With Couch", x: 0.85, y: 0.75),
-        Point(series: "With Couch", x: 1.0, y: 0.95)
-    ]
-
-    private let grayPoints: [Point] = [
-        Point(series: "Trial and error", x: 0, y: 0.2),
-        Point(series: "Trial and error", x: 0.4, y: 0.22),
-        Point(series: "Trial and error", x: 0.7, y: 0.2),
-        Point(series: "Trial and error", x: 1.0, y: 0.15)
-    ]
+    private let samples = 60
 
     var body: some View {
-        VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
-            Text("Confidence")
-                .font(CouchTheme.Typography.caption)
-                .foregroundStyle(CouchTheme.textSecondary)
-                .rotationEffect(.degrees(-90), anchor: .bottomLeading)
-                .fixedSize()
-                .frame(width: 0, alignment: .leading)
-                .padding(.leading, 6)
-
-            ZStack(alignment: .topTrailing) {
-                chart
+        HStack(alignment: .center, spacing: 6) {
+            yAxisLabel
+            VStack(spacing: 8) {
+                plotArea
                     .frame(height: 220)
+                xAxisLabels
+            }
+        }
+    }
+
+    // MARK: - Y axis
+
+    private var yAxisLabel: some View {
+        Text("Confidence")
+            .font(CouchTheme.Typography.caption)
+            .foregroundStyle(CouchTheme.textSecondary)
+            .rotationEffect(.degrees(-90))
+            .fixedSize()
+            .frame(width: 14)
+    }
+
+    // MARK: - Plot
+
+    private var plotArea: some View {
+        GeometryReader { proxy in
+            let size = proxy.size
+            // End dot sits at 70% of the width; the remaining 30% is label room.
+            let dotX: Double = 0.70
+
+            ZStack {
+                dashedEndLine(in: size, at: dotX)
+
+                Path { path in
+                    appendCurve(to: &path, in: size, xEnd: dotX, curve: grayCurve)
+                }
+                .stroke(
+                    CouchTheme.textMuted.opacity(0.55),
+                    style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                )
+
+                Path { path in
+                    appendCurve(to: &path, in: size, xEnd: dotX, curve: orangeCurve)
+                }
+                .stroke(
+                    CouchTheme.primary,
+                    style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                )
+
+                endDot(
+                    color: CouchTheme.textPrimary,
+                    diameter: 10,
+                    in: size,
+                    at: CGPoint(x: dotX, y: 1 - grayCurve(dotX))
+                )
+                endDot(
+                    color: CouchTheme.primary,
+                    diameter: 13,
+                    in: size,
+                    at: CGPoint(x: dotX, y: 1 - orangeCurve(dotX))
+                )
+
+                endLabel(
+                    text: "Stuck",
+                    color: CouchTheme.textSecondary,
+                    in: size,
+                    at: CGPoint(x: dotX + 0.03, y: 1 - grayCurve(dotX)),
+                    maxWidth: size.width * 0.26
+                )
+
+                endLabel(
+                    text: "Calm under\npressure",
+                    color: CouchTheme.primary,
+                    weight: .semibold,
+                    in: size,
+                    at: CGPoint(x: dotX + 0.03, y: 1 - orangeCurve(dotX)),
+                    maxWidth: size.width * 0.26
+                )
 
                 AnnotationPill(
                     title: "Do 1+ rep a week",
                     color: CouchTheme.primary,
                     textColor: .white
                 )
-                .offset(x: -110, y: 24)
+                .pinned(to: CGPoint(x: 0.33, y: 0.42), in: size)
 
                 AnnotationPill(
                     title: "Do it by trial and error",
                     color: CouchTheme.textPrimary,
                     textColor: .white
                 )
-                .offset(x: -90, y: 110)
+                .pinned(to: CGPoint(x: 0.40, y: 0.72), in: size)
             }
+        }
+    }
 
-            HStack {
+    // MARK: - X axis
+
+    private var xAxisLabels: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            ZStack {
                 Text("Now")
                     .font(CouchTheme.Typography.caption)
                     .foregroundStyle(CouchTheme.textSecondary)
-                Spacer()
+                    .fixedSize()
+                    .position(x: 18, y: 8)
+
                 Text("in 3 months")
                     .font(CouchTheme.Typography.caption)
                     .foregroundStyle(CouchTheme.textSecondary)
+                    .fixedSize()
+                    .position(x: width * 0.70, y: 8)
+            }
+        }
+        .frame(height: 16)
+    }
+
+    // MARK: - Curves (height on 0...1, 0 = bottom, 1 = top)
+
+    /// Regular-practice trajectory: gentle start, exponential rise near the end.
+    private func orangeCurve(_ x: Double) -> Double {
+        let t = max(0, min(1, x / 0.70)) // normalise over the visible plot width
+        return 0.30 + 0.62 * pow(t, 2.4)
+    }
+
+    /// Trial-and-error trajectory: flat, gently declining.
+    private func grayCurve(_ x: Double) -> Double {
+        let t = max(0, min(1, x / 0.70))
+        return 0.30 - 0.14 * t
+    }
+
+    // MARK: - Drawing helpers
+
+    private func appendCurve(
+        to path: inout Path,
+        in size: CGSize,
+        xEnd: Double,
+        curve: (Double) -> Double
+    ) {
+        for step in 0...samples {
+            let fractionX = Double(step) / Double(samples) * xEnd
+            let point = CGPoint(
+                x: fractionX * size.width,
+                y: (1 - curve(fractionX)) * size.height
+            )
+            if step == 0 {
+                path.move(to: point)
+            } else {
+                path.addLine(to: point)
             }
         }
     }
 
-    private var chart: some View {
-        Chart {
-            ForEach(grayPoints) { p in
-                LineMark(x: .value("t", p.x), y: .value("y", p.y))
-                    .foregroundStyle(CouchTheme.textMuted)
-                    .interpolationMethod(.catmullRom)
-                    .lineStyle(StrokeStyle(lineWidth: 3))
-            }
-            if let last = grayPoints.last {
-                PointMark(x: .value("t", last.x), y: .value("y", last.y))
-                    .foregroundStyle(CouchTheme.textPrimary)
-                    .symbolSize(90)
-                    .annotation(position: .trailing, alignment: .leading, spacing: 4) {
-                        Text("Stuck")
-                            .font(CouchTheme.Typography.caption)
-                            .foregroundStyle(CouchTheme.textSecondary)
-                    }
-            }
-
-            ForEach(orangePoints) { p in
-                LineMark(x: .value("t", p.x), y: .value("y", p.y))
-                    .foregroundStyle(CouchTheme.primary)
-                    .interpolationMethod(.catmullRom)
-                    .lineStyle(StrokeStyle(lineWidth: 4))
-            }
-            if let last = orangePoints.last {
-                PointMark(x: .value("t", last.x), y: .value("y", last.y))
-                    .foregroundStyle(CouchTheme.primary)
-                    .symbolSize(120)
-                    .annotation(position: .topTrailing, alignment: .leading, spacing: 4) {
-                        Text("Calm under pressure")
-                            .font(CouchTheme.Typography.caption.weight(.semibold))
-                            .foregroundStyle(CouchTheme.primary)
-                    }
-            }
+    private func dashedEndLine(in size: CGSize, at xFraction: Double) -> some View {
+        Path { path in
+            let x = xFraction * size.width
+            path.move(to: CGPoint(x: x, y: 0))
+            path.addLine(to: CGPoint(x: x, y: size.height))
         }
-        .chartXAxis(.hidden)
-        .chartYAxis(.hidden)
-        .chartYScale(domain: 0...1.05)
-        .chartXScale(domain: -0.05...1.2)
+        .stroke(
+            CouchTheme.divider,
+            style: StrokeStyle(lineWidth: 1, dash: [4, 4])
+        )
+    }
+
+    private func endDot(
+        color: Color,
+        diameter: CGFloat,
+        in size: CGSize,
+        at unit: CGPoint
+    ) -> some View {
+        Circle()
+            .fill(color)
+            .frame(width: diameter, height: diameter)
+            .position(
+                x: unit.x * size.width,
+                y: unit.y * size.height
+            )
+    }
+
+    private func endLabel(
+        text: String,
+        color: Color,
+        weight: Font.Weight = .semibold,
+        in size: CGSize,
+        at unit: CGPoint,
+        maxWidth: CGFloat
+    ) -> some View {
+        Text(text)
+            .font(CouchTheme.Typography.caption.weight(weight))
+            .foregroundStyle(color)
+            .lineLimit(2)
+            .multilineTextAlignment(.leading)
+            .frame(width: maxWidth, alignment: .leading)
+            .position(
+                x: unit.x * size.width + maxWidth / 2,
+                y: unit.y * size.height
+            )
     }
 }
+
+// MARK: - Annotation pill
 
 private struct AnnotationPill: View {
     let title: String
@@ -119,15 +223,28 @@ private struct AnnotationPill: View {
         Text(title)
             .font(CouchTheme.Typography.pill)
             .foregroundStyle(textColor)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
             .background(Capsule().fill(color))
-            .shadow(color: CouchTheme.textPrimary.opacity(0.08), radius: 10, x: 0, y: 4)
+            .couchElevation(.sm)
+            .fixedSize()
+    }
+}
+
+private extension View {
+    /// Position a view at a unit-space point (0...1 in both axes) inside a
+    /// parent with known `size`.
+    func pinned(to unit: CGPoint, in size: CGSize) -> some View {
+        self.position(
+            x: unit.x * size.width,
+            y: unit.y * size.height
+        )
     }
 }
 
 #Preview {
     SciencePathChart()
         .padding()
+        .frame(height: 280)
         .background(CouchTheme.background)
 }

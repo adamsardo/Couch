@@ -409,6 +409,7 @@
 				DEVELOPMENT_TEAM = 396Z7K26QX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Couch;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Couch uses your microphone so you can speak with simulated patients during practice sessions. We never share your audio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -442,6 +443,7 @@
 				DEVELOPMENT_TEAM = 396Z7K26QX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Couch;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Couch uses your microphone so you can speak with simulated patients during practice sessions. We never share your audio.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

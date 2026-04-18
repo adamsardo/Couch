@@ -28,7 +28,7 @@ struct PillOption: View {
                         )
                 )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.couchPress)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
     }

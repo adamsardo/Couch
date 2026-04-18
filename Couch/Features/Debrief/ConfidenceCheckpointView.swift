@@ -32,18 +32,22 @@ struct ConfidenceCheckpointView: View {
                         HStack {
                             Image(systemName: coordinator.confidenceAfter == option.0 ? "circle.inset.filled" : "circle")
                                 .foregroundStyle(coordinator.confidenceAfter == option.0 ? CouchTheme.primary : CouchTheme.textMuted)
+                                .contentTransition(.symbolEffect(.replace))
+                                .accessibilityHidden(true)
                             Text(option.1)
                                 .foregroundStyle(CouchTheme.textPrimary)
                                 .font(CouchTheme.Typography.body)
                             Spacer()
                             Text("\(option.0)")
-                                .font(CouchTheme.Typography.caption)
+                                .font(CouchTheme.Typography.caption.monospacedDigit())
                                 .foregroundStyle(CouchTheme.textMuted)
                         }
                         .frame(maxWidth: .infinity)
                         .couchGlassCard(tint: coordinator.confidenceAfter == option.0 ? CouchTheme.primary.opacity(0.1) : nil)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.couchPress)
+                    .accessibilityLabel(option.1)
+                    .accessibilityAddTraits(coordinator.confidenceAfter == option.0 ? [.isSelected, .isButton] : .isButton)
                 }
             }
 

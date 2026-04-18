@@ -1,22 +1,40 @@
 import SwiftUI
 
 struct DebriefGenerationView: View {
-    @State private var pulse = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private let phases: [PersonalisingLoader.Phase] = [
+        .init(label: "Reading what happened in the room", duration: 1.2),
+        .init(label: "Tagging the moves that landed", duration: 1.2),
+        .init(label: "Shaping your next-rep drill", duration: 1.4)
+    ]
 
     var body: some View {
         VStack(spacing: CouchTheme.Spacing.lg) {
-            Spacer()
+            Spacer(minLength: 0)
+
             ZStack {
                 Circle()
                     .fill(CouchTheme.accent.opacity(0.18))
                     .frame(width: 160, height: 160)
-                    .scaleEffect(pulse ? 1.05 : 0.95)
-                    .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: pulse)
                 Image(systemName: "sparkles")
                     .font(.system(size: 56))
                     .foregroundStyle(CouchTheme.accent)
+                    .symbolEffect(
+                        .variableColor.iterative.reversing,
+                        options: .repeating,
+                        isActive: !reduceMotion
+                    )
+                    .symbolEffect(
+                        .pulse.byLayer,
+                        options: .repeating.speed(0.5),
+                        isActive: !reduceMotion
+                    )
+                    .accessibilityHidden(true)
             }
-            VStack(spacing: 8) {
+            .accessibilityLabel("Generating your debrief")
+
+            VStack(spacing: CouchTheme.Spacing.xs + 2) {
                 Text("Reading your rep…")
                     .font(CouchTheme.Typography.title)
                     .foregroundStyle(CouchTheme.textPrimary)
@@ -26,14 +44,14 @@ struct DebriefGenerationView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, CouchTheme.Spacing.lg)
             }
-            ProgressView()
-                .controlSize(.regular)
-                .tint(CouchTheme.primary)
-            Spacer()
+
+            PersonalisingLoader(phases: phases, onFinished: {})
+                .padding(.horizontal, CouchTheme.Spacing.lg)
+
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(CouchTheme.background)
-        .onAppear { pulse = true }
     }
 }
 

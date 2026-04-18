@@ -14,6 +14,7 @@ struct SpeakingOrb: View {
 
     var mode: Mode
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pulse: CGFloat = 0.85
 
     private var color: Color {
@@ -55,9 +56,18 @@ struct SpeakingOrb: View {
                 .scaleEffect(scale)
         }
         .frame(width: 96, height: 96)
-        .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: pulse)
-        .animation(.easeInOut(duration: 0.25), value: mode)
-        .onAppear { pulse = 1.05 }
+        .animation(
+            CouchMotion.respecting(
+                reduceMotion,
+                .easeInOut(duration: 0.6).repeatForever(autoreverses: true)
+            ),
+            value: pulse
+        )
+        .animation(CouchMotion.stateChange, value: mode)
+        .onAppear {
+            guard !reduceMotion else { return }
+            pulse = 1.05
+        }
         .accessibilityElement()
         .accessibilityLabel(label)
         .accessibilityAddTraits(.updatesFrequently)

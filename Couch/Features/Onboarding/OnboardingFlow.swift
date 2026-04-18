@@ -7,6 +7,7 @@ struct OnboardingFlow: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
     @State private var state = OnboardingState()
+    @Namespace private var zoomNamespace
 
     var body: some View {
         NavigationStack(path: $state.path) {
@@ -24,6 +25,7 @@ struct OnboardingFlow: View {
         }
         .tint(CouchTheme.primary)
         .background(CouchTheme.background.ignoresSafeArea())
+        .environment(\.zoomNamespace, zoomNamespace)
     }
 
     @ViewBuilder
@@ -90,7 +92,7 @@ private struct OnboardingChrome: ViewModifier {
     }
 
     private var showsProgressBar: Bool {
-        step != .personalising && step != .scenarioDetail
+        step != .scenarioDetail
     }
 }
 

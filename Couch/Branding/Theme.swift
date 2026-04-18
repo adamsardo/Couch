@@ -43,9 +43,24 @@ enum CouchTheme {
         static let option: CGFloat = 22
         static let control: CGFloat = 28
         static let sheet: CGFloat = 28
+        /// Soft container inside a card (review tiles, subtitle pills, notification previews).
+        static let bubble: CGFloat = 18
+        /// Mid-density panel (inline plan card).
+        static let panel: CGFloat = 20
+        /// Small chip / app-icon size rectangle.
+        static let chip: CGFloat = 10
+
+        /// Derive a concentric inner radius so nested shapes track the outer
+        /// one: `inner = outer - padding`, floored at 4pt so corners never
+        /// go fully square.
+        static func inner(of outer: CGFloat, padding: CGFloat) -> CGFloat {
+            max(4, outer - padding)
+        }
     }
 
     enum Spacing {
+        /// 4pt. Fine-grain stacking (label-to-control, decorative icon gaps).
+        static let xxs: CGFloat = 4
         static let xs: CGFloat = 6
         static let sm: CGFloat = 10
         static let md: CGFloat = 16
@@ -61,6 +76,9 @@ enum CouchTheme {
         static let body = Font.system(.body, design: .default)
         static let bodyEmphasized = Font.system(.body, design: .default, weight: .semibold)
         static let caption = Font.system(.footnote, design: .rounded)
+        /// Tracked-caps eyebrow above a title ("SESSION 1 · FIRST REP").
+        /// Pair with `.textCase(.uppercase)` and `.kerning(1.2)`.
+        static let eyebrow = Font.system(.caption2, design: .rounded, weight: .semibold)
         static let pill = Font.system(.callout, design: .rounded, weight: .semibold)
         static let pillCTA = Font.system(.title3, design: .rounded, weight: .semibold)
     }

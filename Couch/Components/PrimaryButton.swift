@@ -35,9 +35,9 @@ struct PrimaryButton: View {
             )
         }
         .disabled(isLoading || !isEnabled)
-        .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.15), value: isEnabled)
-        .animation(.easeInOut(duration: 0.15), value: isLoading)
+        .buttonStyle(.couchPress)
+        .animation(CouchMotion.pressFeedback, value: isEnabled)
+        .animation(CouchMotion.pressFeedback, value: isLoading)
         .accessibilityLabel(title)
     }
 
@@ -80,7 +80,7 @@ struct SecondaryButton: View {
                     .fill(CouchTheme.surfaceMuted)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.couchPress)
         .accessibilityLabel(title)
     }
 }
