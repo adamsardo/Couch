@@ -38,9 +38,11 @@ enum CouchElevation {
 }
 
 extension CouchTheme {
-    /// Warm neutral shadow tone. Slightly warmer than `textPrimary` to read
-    /// as depth on the app's white + cream surfaces. Not pure black.
-    static let shadowWarm = Color(hex: 0x1A120C)
+    /// Cool-navy shadow tone. Shifted from pure black toward the brand blue
+    /// so cards on the GO-style palette read with depth without muddying
+    /// the hue. Name retained (`shadowWarm`) to avoid sweeping rename across
+    /// every elevation call site.
+    static let shadowWarm = Color(hex: 0x0E1030)
 }
 
 private struct CouchElevationModifier: ViewModifier {
