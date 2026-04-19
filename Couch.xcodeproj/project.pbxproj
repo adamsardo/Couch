@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		E1EBAB5E000000000000001A /* ElevenLabs in Frameworks */ = {isa = PBXBuildFile; productRef = E1EBAB5E000000000000002A /* ElevenLabs */; };
+		E1EBAB5E000000000000001B /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = E1EBAB5E000000000000002B /* LiveKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E1EBAB5E000000000000001A /* ElevenLabs in Frameworks */,
+				E1EBAB5E000000000000001B /* LiveKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,6 +120,7 @@
 			name = Couch;
 			packageProductDependencies = (
 				E1EBAB5E000000000000002A /* ElevenLabs */,
+				E1EBAB5E000000000000002B /* LiveKit */,
 			);
 			productName = Couch;
 			productReference = 159DB8E02F9298FF00391D24 /* Couch.app */;
@@ -203,6 +206,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				E1EBAB5E000000000000003A /* XCRemoteSwiftPackageReference "elevenlabs-swift-sdk" */,
+				E1EBAB5E000000000000003B /* XCRemoteSwiftPackageReference "client-sdk-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 159DB8E12F9298FF00391D24 /* Products */;
@@ -605,6 +609,14 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		E1EBAB5E000000000000003B /* XCRemoteSwiftPackageReference "client-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/livekit/client-sdk-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -612,6 +624,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E1EBAB5E000000000000003A /* XCRemoteSwiftPackageReference "elevenlabs-swift-sdk" */;
 			productName = ElevenLabs;
+		};
+		E1EBAB5E000000000000002B /* LiveKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1EBAB5E000000000000003B /* XCRemoteSwiftPackageReference "client-sdk-swift" */;
+			productName = LiveKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

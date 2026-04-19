@@ -1,0 +1,35 @@
+{
+  "name": "couch-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Couch LiveKit token server + Node.js LiveKit agent with LemonSlice virtual avatar",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=20 <23"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "token-server": "tsx src/token-server.ts",
+    "agent": "tsx src/agent.ts dev",
+    "agent:prod": "tsx src/agent.ts start",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test --import tsx test/*.test.ts"
+  },
+  "dependencies": {
+    "@livekit/agents": "^1.2.7",
+    "@livekit/agents-plugin-elevenlabs": "^1.2.7",
+    "@livekit/agents-plugin-lemonslice": "^1.2.7",
+    "@livekit/agents-plugin-openai": "^1.2.7",
+    "@livekit/agents-plugin-silero": "^1.2.7",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "livekit-server-sdk": "^2.9.6",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
