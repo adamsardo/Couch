@@ -15,11 +15,11 @@ struct DebriefGenerationView: View {
 
             ZStack {
                 Circle()
-                    .fill(CouchTheme.accent.opacity(0.18))
+                    .fill(CouchTheme.accent.opacity(0.28))
                     .frame(width: 160, height: 160)
                 Image(systemName: "sparkles")
                     .font(.system(size: 56))
-                    .foregroundStyle(CouchTheme.accent)
+                    .foregroundStyle(CouchTheme.primary)
                     .symbolEffect(
                         .variableColor.iterative.reversing,
                         options: .repeating,
