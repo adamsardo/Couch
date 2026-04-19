@@ -7,7 +7,7 @@ struct GoalsView: View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
                 Text("What would you like to achieve with Couch?")
-                    .font(CouchTheme.Typography.title)
+                    .font(CouchTheme.Typography.titleHeavy)
                     .foregroundStyle(CouchTheme.textPrimary)
                 Text("Choose one or more areas to focus on.")
                     .font(CouchTheme.Typography.body)

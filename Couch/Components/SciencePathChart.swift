@@ -1,13 +1,23 @@
 import SwiftUI
 
 /// Marketing chart showing two trajectories over three months:
-/// - Orange: regular short reps → "Calm under pressure"
-/// - Gray: trial-and-error → "Stuck"
+/// - Brand: regular short reps → "Calm under pressure"
+/// - Muted: trial-and-error → "Stuck"
 ///
 /// Drawn with two custom `Path`s over a normalized coordinate system so
 /// annotation pills, end dots, and labels all align with the curves regardless
 /// of the host width.
 struct SciencePathChart: View {
+    enum Appearance {
+        /// Default on-white presentation: blue brand curve, gray muted curve.
+        case light
+        /// On-hero presentation for the blue full-bleed marketing screen:
+        /// white brand curve with a yellow end-dot, translucent-white muted
+        /// curve, and white/yellow annotation pills.
+        case onHero
+    }
+
+    var appearance: Appearance = .light
     private let samples = 60
 
     var body: some View {
@@ -26,7 +36,7 @@ struct SciencePathChart: View {
     private var yAxisLabel: some View {
         Text("Confidence")
             .font(CouchTheme.Typography.caption)
-            .foregroundStyle(CouchTheme.textSecondary)
+            .foregroundStyle(axisLabelColor)
             .rotationEffect(.degrees(-90))
             .fixedSize()
             .frame(width: 14)
@@ -47,7 +57,7 @@ struct SciencePathChart: View {
                     appendCurve(to: &path, in: size, xEnd: dotX, curve: grayCurve)
                 }
                 .stroke(
-                    CouchTheme.textMuted.opacity(0.55),
+                    mutedCurveColor,
                     style: StrokeStyle(lineWidth: 3, lineCap: .round)
                 )
 
@@ -55,18 +65,18 @@ struct SciencePathChart: View {
                     appendCurve(to: &path, in: size, xEnd: dotX, curve: orangeCurve)
                 }
                 .stroke(
-                    CouchTheme.primary,
+                    brandCurveColor,
                     style: StrokeStyle(lineWidth: 4, lineCap: .round)
                 )
 
                 endDot(
-                    color: CouchTheme.textPrimary,
+                    color: mutedEndDotColor,
                     diameter: 10,
                     in: size,
                     at: CGPoint(x: dotX, y: 1 - grayCurve(dotX))
                 )
                 endDot(
-                    color: CouchTheme.primary,
+                    color: brandEndDotColor,
                     diameter: 13,
                     in: size,
                     at: CGPoint(x: dotX, y: 1 - orangeCurve(dotX))
@@ -74,7 +84,7 @@ struct SciencePathChart: View {
 
                 endLabel(
                     text: "Stuck",
-                    color: CouchTheme.textSecondary,
+                    color: mutedEndLabelColor,
                     in: size,
                     at: CGPoint(x: dotX + 0.03, y: 1 - grayCurve(dotX)),
                     maxWidth: size.width * 0.26
@@ -82,7 +92,7 @@ struct SciencePathChart: View {
 
                 endLabel(
                     text: "Calm under\npressure",
-                    color: CouchTheme.primary,
+                    color: brandEndLabelColor,
                     weight: .semibold,
                     in: size,
                     at: CGPoint(x: dotX + 0.03, y: 1 - orangeCurve(dotX)),
@@ -91,15 +101,15 @@ struct SciencePathChart: View {
 
                 AnnotationPill(
                     title: "Do 1+ rep a week",
-                    color: CouchTheme.primary,
-                    textColor: .white
+                    color: brandPillFill,
+                    textColor: brandPillText
                 )
                 .pinned(to: CGPoint(x: 0.33, y: 0.42), in: size)
 
                 AnnotationPill(
                     title: "Do it by trial and error",
-                    color: CouchTheme.textPrimary,
-                    textColor: .white
+                    color: mutedPillFill,
+                    textColor: mutedPillText
                 )
                 .pinned(to: CGPoint(x: 0.40, y: 0.72), in: size)
             }
@@ -114,13 +124,13 @@ struct SciencePathChart: View {
             ZStack {
                 Text("Now")
                     .font(CouchTheme.Typography.caption)
-                    .foregroundStyle(CouchTheme.textSecondary)
+                    .foregroundStyle(axisLabelColor)
                     .fixedSize()
                     .position(x: 18, y: 8)
 
                 Text("in 3 months")
                     .font(CouchTheme.Typography.caption)
-                    .foregroundStyle(CouchTheme.textSecondary)
+                    .foregroundStyle(axisLabelColor)
                     .fixedSize()
                     .position(x: width * 0.70, y: 8)
             }
@@ -140,6 +150,92 @@ struct SciencePathChart: View {
     private func grayCurve(_ x: Double) -> Double {
         let t = max(0, min(1, x / 0.70))
         return 0.30 - 0.14 * t
+    }
+
+    // MARK: - Appearance-driven colours
+
+    private var axisLabelColor: Color {
+        switch appearance {
+        case .light: return CouchTheme.textSecondary
+        case .onHero: return .white.opacity(0.7)
+        }
+    }
+
+    private var brandCurveColor: Color {
+        switch appearance {
+        case .light: return CouchTheme.primary
+        case .onHero: return .white
+        }
+    }
+
+    private var mutedCurveColor: Color {
+        switch appearance {
+        case .light: return CouchTheme.textMuted.opacity(0.55)
+        case .onHero: return .white.opacity(0.35)
+        }
+    }
+
+    private var brandEndDotColor: Color {
+        switch appearance {
+        case .light: return CouchTheme.primary
+        case .onHero: return CouchTheme.accent
+        }
+    }
+
+    private var mutedEndDotColor: Color {
+        switch appearance {
+        case .light: return CouchTheme.textPrimary
+        case .onHero: return .white.opacity(0.75)
+        }
+    }
+
+    private var brandEndLabelColor: Color {
+        switch appearance {
+        case .light: return CouchTheme.primary
+        case .onHero: return CouchTheme.accent
+        }
+    }
+
+    private var mutedEndLabelColor: Color {
+        switch appearance {
+        case .light: return CouchTheme.textSecondary
+        case .onHero: return .white.opacity(0.7)
+        }
+    }
+
+    private var brandPillFill: Color {
+        switch appearance {
+        case .light: return CouchTheme.primary
+        case .onHero: return .white
+        }
+    }
+
+    private var brandPillText: Color {
+        switch appearance {
+        case .light: return .white
+        case .onHero: return CouchTheme.primary
+        }
+    }
+
+    private var mutedPillFill: Color {
+        switch appearance {
+        case .light: return CouchTheme.textPrimary
+        case .onHero: return Color(hex: 0x1A1D80)
+        }
+    }
+
+    private var mutedPillText: Color {
+        switch appearance {
+        case .light: return .white
+        case .onHero: return .white
+        }
+    }
+
+    private var dashColor: Color {
+        switch appearance {
+        case .light: return CouchTheme.divider
+        case .onHero: return .white.opacity(0.3)
+        }
     }
 
     // MARK: - Drawing helpers
@@ -171,7 +267,7 @@ struct SciencePathChart: View {
             path.addLine(to: CGPoint(x: x, y: size.height))
         }
         .stroke(
-            CouchTheme.divider,
+            dashColor,
             style: StrokeStyle(lineWidth: 1, dash: [4, 4])
         )
     }
@@ -242,9 +338,16 @@ private extension View {
     }
 }
 
-#Preview {
+#Preview("Light") {
     SciencePathChart()
         .padding()
         .frame(height: 280)
         .background(CouchTheme.background)
+}
+
+#Preview("On hero") {
+    SciencePathChart(appearance: .onHero)
+        .padding()
+        .frame(height: 280)
+        .background(CouchTheme.heroBackground)
 }

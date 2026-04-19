@@ -55,10 +55,17 @@ final class SessionCoordinator {
 
     private var driver: ConversationDriver?
     private var liveKitDriver: LiveKitConversationDriver? { driver as? LiveKitConversationDriver }
-    private var eventTask: Task<Void, Never>?
-    private var timerTask: Task<Void, Never>?
+    // `nonisolated(unsafe)` so the nonisolated `deinit` can still reach
+    // into these Task handles to cancel them when the coordinator is
+    // deallocated. They're only ever written from the main actor, and
+    // `Task` is Sendable, so the access is safe in practice.
+    nonisolated(unsafe) private var eventTask: Task<Void, Never>?
+    nonisolated(unsafe) private var timerTask: Task<Void, Never>?
     private var sessionID: PersistentIdentifier?
     private var startedAt: Date?
+    /// Last rapport score we fired a milestone haptic for. Monotonically
+    /// rising; we only celebrate upward crossings.
+    private var lastRapportMilestone: Int = 0
 
     init(scenario: Scenario, mode: SessionMode, modelContext: ModelContext) {
         self.scenario = scenario
@@ -252,9 +259,17 @@ final class SessionCoordinator {
             createdAt: turn.createdAt
         )
         visibleTurns.append(display)
-        rapportScore = estimator.estimate(turns: visibleTurns.map {
+        let updatedRapport = estimator.estimate(turns: visibleTurns.map {
             RapportTurn(role: $0.role, text: $0.text)
         })
+        if updatedRapport > rapportScore {
+            let milestones = [50, 70, 90]
+            for milestone in milestones where updatedRapport >= milestone && rapportScore < milestone && lastRapportMilestone < milestone {
+                CouchHaptics.rapportMilestone()
+                lastRapportMilestone = milestone
+            }
+        }
+        rapportScore = updatedRapport
         if let sessionID {
             let snapshot = turn
             Task { [store] in

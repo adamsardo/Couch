@@ -1,0 +1,114 @@
+name: iOS CI
+
+on:
+  push:
+    branches:
+      - main
+      - "codex/**"
+      - "cursor/**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & test (iOS Simulator)
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    env:
+      SCHEME: Couch
+      PROJECT: Couch.xcodeproj
+      DESTINATION_BUILD: generic/platform=iOS Simulator
+      # Use the fixed "latest iPhone" fallback; the test step resolves a
+      # concrete simulator from `simctl list` so it keeps working as GitHub
+      # rolls the runner image forward.
+      PREFERRED_SIM_NAME_PATTERN: "iPhone 17 Pro|iPhone 17|iPhone Air|iPhone 16"
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Select the newest Xcode available on the runner
+        run: |
+          set -euo pipefail
+          # Prefer Xcode 26.x (what Couch targets), fall back to the newest
+          # /Applications/Xcode_*.app on the runner image.
+          if [ -d "/Applications/Xcode_26.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_26.app
+          else
+            latest=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -n 1)
+            if [ -n "${latest}" ]; then
+              sudo xcode-select -s "${latest}"
+            fi
+          fi
+          xcodebuild -version
+
+      - name: Show available simulators (diagnostic)
+        run: xcrun simctl list devices available
+
+      - name: Resolve a concrete iPhone simulator
+        id: sim
+        run: |
+          set -euo pipefail
+          # Pick the first simulator whose name matches the preferred
+          # pattern and whose line still contains "(Booted)" or is plain
+          # `available`. We strip the (UDID) so xcodebuild can re-pick it.
+          name=$(
+            xcrun simctl list devices available \
+              | grep -E "${PREFERRED_SIM_NAME_PATTERN}" \
+              | head -n 1 \
+              | sed -E 's/ *\(.*//' \
+              | xargs
+          )
+          if [ -z "${name}" ]; then
+            echo "No matching simulator found" >&2
+            exit 1
+          fi
+          echo "Picked simulator: ${name}"
+          echo "name=${name}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve Swift packages
+        run: |
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -resolvePackageDependencies
+
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "$DESTINATION_BUILD" \
+            -configuration Debug \
+            build 2>&1 | tee build.log
+
+      - name: Test
+        env:
+          SIM_NAME: ${{ steps.sim.outputs.name }}
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "platform=iOS Simulator,name=${SIM_NAME},OS=latest" \
+            -resultBundlePath TestResults.xcresult \
+            test 2>&1 | tee test.log
+
+      - name: Upload logs + test result bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: couch-ci-logs-${{ github.run_number }}
+          path: |
+            build.log
+            test.log
+            TestResults.xcresult
+          retention-days: 14

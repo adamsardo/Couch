@@ -7,7 +7,7 @@ struct StressorsView: View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
                 Text("What's most challenging about practising right now?")
-                    .font(CouchTheme.Typography.title)
+                    .font(CouchTheme.Typography.titleHeavy)
                     .foregroundStyle(CouchTheme.textPrimary)
                 Text("Select all that apply — your answers stay on your device.")
                     .font(CouchTheme.Typography.body)

@@ -71,6 +71,12 @@ struct ConversationView: View {
             .padding(.horizontal, CouchTheme.Spacing.md)
             .padding(.top, CouchTheme.Spacing.sm)
 
+            if coordinator.phase == .live {
+                RapportMeter(score: coordinator.rapportScore, reduceMotion: reduceMotion)
+                    .padding(.top, CouchTheme.Spacing.xs)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
             ConnectingHint(phase: coordinator.phase, agentMode: coordinator.agentMode, reduceMotion: reduceMotion)
                 .padding(.top, CouchTheme.Spacing.xs)
 

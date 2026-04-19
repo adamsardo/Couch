@@ -7,7 +7,7 @@ struct QuickProfileView: View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
                 Text("A little about your placement.")
-                    .font(CouchTheme.Typography.title)
+                    .font(CouchTheme.Typography.titleHeavy)
                     .foregroundStyle(CouchTheme.textPrimary)
                 Text("Two quick taps. Skip if you'd rather just dive in.")
                     .font(CouchTheme.Typography.body)

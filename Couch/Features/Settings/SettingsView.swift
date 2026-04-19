@@ -19,6 +19,57 @@ struct SettingsView: View {
                     Text("Profile").textCase(nil)
                 }
 
+                Section {
+                    Stepper(
+                        value: Binding(
+                            get: { profile.weeklyRepGoal },
+                            set: { newValue in
+                                profile.weeklyRepGoal = max(1, min(newValue, 10))
+                                try? modelContext.save()
+                            }
+                        ),
+                        in: 1...10
+                    ) {
+                        HStack {
+                            Label {
+                                Text("Weekly rep goal")
+                            } icon: {
+                                Image(systemName: CouchIcons.target)
+                                    .foregroundStyle(CouchTheme.primary)
+                            }
+                            Spacer()
+                            Text("\(profile.weeklyRepGoal)")
+                                .font(CouchTheme.Typography.bodyEmphasized.monospacedDigit())
+                                .foregroundStyle(CouchTheme.textSecondary)
+                                .contentTransition(.numericText())
+                        }
+                    }
+
+                    Picker(
+                        selection: Binding(
+                            get: { profile.defaultSessionMode },
+                            set: { newValue in
+                                profile.defaultSessionMode = newValue
+                                try? modelContext.save()
+                            }
+                        )
+                    ) {
+                        Text("Voice").tag(SessionMode.voice)
+                        Text("Text").tag(SessionMode.text)
+                    } label: {
+                        Label {
+                            Text("Default session mode")
+                        } icon: {
+                            Image(systemName: CouchIcons.micOn)
+                                .foregroundStyle(CouchTheme.primary)
+                        }
+                    }
+                } header: {
+                    Text("Practice plan").textCase(nil)
+                } footer: {
+                    Text("Used for your Home ring and the Quick Rep accessory.")
+                }
+
                 Section("Notifications") {
                     Toggle("Allow reminders", isOn: $profile.notificationsEnabled)
                         .tint(CouchTheme.primary)
@@ -35,7 +86,7 @@ struct SettingsView: View {
                                     .foregroundStyle(CouchTheme.textSecondary)
                             }
                             Spacer()
-                            Image(systemName: "arrow.up.right")
+                            Image(systemName: CouchIcons.arrowUpRight)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(CouchTheme.textMuted)
                                 .accessibilityHidden(true)
@@ -51,7 +102,7 @@ struct SettingsView: View {
                                     .foregroundStyle(CouchTheme.textSecondary)
                             }
                             Spacer()
-                            Image(systemName: "arrow.up.right")
+                            Image(systemName: CouchIcons.arrowUpRight)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(CouchTheme.textMuted)
                                 .accessibilityHidden(true)
@@ -112,7 +163,7 @@ struct SettingsView: View {
                 .frame(width: 48, height: 48)
             Text(String((profile.name ?? "C").prefix(1)).uppercased())
                 .font(CouchTheme.Typography.cardTitle)
-                .foregroundStyle(CouchTheme.textPrimary)
+                .foregroundStyle(CouchTheme.primary)
         }
         .accessibilityHidden(true)
     }
@@ -143,6 +194,8 @@ struct SettingsView: View {
         profile.goals = []
         profile.notificationsEnabled = false
         profile.ahaShown = false
+        profile.weeklyRepGoal = 3
+        profile.defaultSessionMode = .voice
         try? modelContext.save()
     }
 }

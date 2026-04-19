@@ -42,12 +42,28 @@ final class OnboardingState {
         path.append(step)
     }
 
-    /// Used by the flow container to render the orange progress bar.
+    /// Used by the flow container to render the continuous progress bar.
     func progress(for step: Step) -> Double {
         let ordered = Step.allCases
         guard let index = ordered.firstIndex(of: step) else { return 0 }
         let total = max(ordered.count - 1, 1)
         return Double(index) / Double(total)
+    }
+
+    /// Ordered list of steps that show a progress rail. Personalising and
+    /// scenario-detail hide the rail; they shouldn't count toward the
+    /// segmented progression.
+    static let railSteps: [Step] = Step.allCases.filter { step in
+        step != .personalising && step != .scenarioDetail
+    }
+
+    /// Number of segments the rail should show.
+    var visibleStepCount: Int { Self.railSteps.count }
+
+    /// Zero-based index of `step` within the visible rail. Returns -1 for
+    /// hidden steps.
+    func stepIndex(for step: Step) -> Int {
+        Self.railSteps.firstIndex(of: step) ?? -1
     }
 
     /// Single stressor is still useful elsewhere (e.g. aha-moment copy).

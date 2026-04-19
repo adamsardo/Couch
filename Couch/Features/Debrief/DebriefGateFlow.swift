@@ -100,7 +100,12 @@ private struct DebriefStepsView: View {
         case .confidence:
             ConfidenceCheckpointView(coordinator: coordinator)
         case .completed:
-            CompletionView(snapshot: snapshot, payload: payload, onComplete: onComplete)
+            CompletionView(
+                snapshot: snapshot,
+                payload: payload,
+                confidenceAfter: coordinator.confidenceAfter,
+                onComplete: onComplete
+            )
         }
     }
 
@@ -217,6 +222,7 @@ private struct ProgressBar: View {
 private struct CompletionView: View {
     let snapshot: SessionSnapshot
     let payload: DebriefPayload
+    let confidenceAfter: Int?
     var onComplete: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -254,6 +260,7 @@ private struct CompletionView: View {
             // Trigger bounce on arrival.
             try? await Task.sleep(for: .milliseconds(120))
             appeared = true
+            CouchHaptics.scorecardLand()
         }
     }
 
@@ -277,37 +284,28 @@ private struct CompletionView: View {
     }
 
     private var metricStrip: some View {
-        HStack(spacing: CouchTheme.Spacing.lg) {
-            metric(value: TimeFormatting.mmss(snapshot.elapsed), label: "Elapsed")
-            Divider().frame(height: 28)
-            metric(value: "\(snapshot.turns.count)", label: "Turns")
-            Divider().frame(height: 28)
-            metric(value: "\(payload.strengths.count)", label: "Strengths")
+        VStack(spacing: CouchTheme.Spacing.sm) {
+            HStack(spacing: CouchTheme.Spacing.sm) {
+                StatTile(value: TimeFormatting.mmss(snapshot.elapsed), caption: "Elapsed")
+                StatTile(value: "\(snapshot.turns.count)", caption: "Turns")
+                StatTile(value: "\(snapshot.rapport)", caption: "Rapport")
+            }
+            HStack(spacing: CouchTheme.Spacing.sm) {
+                StatTile(value: "\(payload.strengths.count)", caption: "Strengths")
+                StatTile(value: "\(payload.nextMoves.count)", caption: "Next moves")
+                StatTile(
+                    value: confidenceAfterText,
+                    caption: "Confidence"
+                )
+            }
         }
-        .padding(.vertical, CouchTheme.Spacing.sm)
-        .padding(.horizontal, CouchTheme.Spacing.md)
-        .background(
-            RoundedRectangle(
-                cornerRadius: CouchTheme.Radius.inner(of: CouchTheme.Radius.card, padding: CouchTheme.Spacing.lg),
-                style: .continuous
-            )
-            .fill(CouchTheme.surfaceMuted)
-        )
     }
 
-    private func metric(value: String, label: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(CouchTheme.Typography.cardTitle.monospacedDigit())
-                .foregroundStyle(CouchTheme.textPrimary)
-                .contentTransition(.numericText())
-            Text(label)
-                .font(CouchTheme.Typography.caption)
-                .foregroundStyle(CouchTheme.textMuted)
+    private var confidenceAfterText: String {
+        if let after = confidenceAfter {
+            return "\(after)/5"
         }
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label): \(value)")
+        return "–"
     }
 }
 

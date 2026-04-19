@@ -6,7 +6,10 @@ struct HighlightedText: View {
     let fullText: String
     let highlight: String
     var font: Font = CouchTheme.Typography.display
-    var highlightColor: Color = CouchTheme.primary
+    /// Defaults to the legible yellow-shifted brand colour so the highlight
+    /// reads crisply on white body surfaces. Pass `CouchTheme.accent`
+    /// explicitly for the bright yellow used on blue hero screens.
+    var highlightColor: Color = CouchTheme.accentOnLight
     var baseColor: Color = CouchTheme.textPrimary
 
     var body: some View {
