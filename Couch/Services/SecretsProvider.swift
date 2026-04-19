@@ -63,5 +63,5 @@ nonisolated final class SecretsProvider: Sendable {
 }
 
 enum KeychainAccount {
-    static let openAI = "openai-api-key"
+    nonisolated static let openAI = "openai-api-key"
 }

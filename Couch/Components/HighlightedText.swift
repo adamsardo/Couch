@@ -20,12 +20,10 @@ struct HighlightedText: View {
         guard let range = fullText.range(of: highlight, options: .caseInsensitive) else {
             return Text(fullText).foregroundStyle(baseColor)
         }
-        let prefix = String(fullText[..<range.lowerBound])
-        let match = String(fullText[range])
-        let suffix = String(fullText[range.upperBound...])
-        return Text(prefix).foregroundStyle(baseColor)
-            + Text(match).foregroundStyle(highlightColor)
-            + Text(suffix).foregroundStyle(baseColor)
+        let prefix = Text(verbatim: String(fullText[..<range.lowerBound])).foregroundStyle(baseColor)
+        let match = Text(verbatim: String(fullText[range])).foregroundStyle(highlightColor)
+        let suffix = Text(verbatim: String(fullText[range.upperBound...])).foregroundStyle(baseColor)
+        return Text("\(prefix)\(match)\(suffix)")
     }
 }
 
