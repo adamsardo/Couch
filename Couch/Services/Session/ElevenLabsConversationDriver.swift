@@ -1,6 +1,12 @@
 import Combine
 import ElevenLabs
 import Foundation
+// Explicit LiveKit import is required under Swift 6's
+// `MemberImportVisibility` upcoming feature: the `AgentState` enum that
+// `Conversation.$agentState` publishes is defined in LiveKit, and its
+// cases (`.speaking`, `.listening`, `.thinking`, `.initializing`) are
+// only visible to a consumer that imports the defining module directly.
+import LiveKit
 import OSLog
 
 /// Legacy ``ConversationDriver`` that speaks directly to the ElevenLabs

@@ -100,7 +100,9 @@ final class LiveKitConversationDriver: NSObject, ConversationDriver {
                 // in-room text input. Send it as a reliable data packet.
                 try await room.localParticipant.publish(
                     data: payload,
-                    options: DataPublishOptions(reliable: true, topic: "lk.chat")
+                    // LiveKit 2.6 reordered the initializer so `topic:`
+                    // comes before `reliable:`.
+                    options: DataPublishOptions(topic: "lk.chat", reliable: true)
                 )
             }
             // Optimistically echo as a local user turn so the student sees
