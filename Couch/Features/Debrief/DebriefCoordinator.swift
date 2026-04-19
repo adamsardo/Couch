@@ -55,8 +55,9 @@ final class DebriefCoordinator {
         case .nextMoves: step = .microDrill
         case .microDrill: step = .confidence
         case .confidence: step = .completed
-        case .completed: break
+        case .completed: return
         }
+        CouchHaptics.stepAdvance()
     }
 
     func setConfidence(_ value: Int) {

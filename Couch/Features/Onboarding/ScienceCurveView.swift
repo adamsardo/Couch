@@ -5,6 +5,8 @@ import SwiftUI
 struct ScienceCurveView: View {
     let state: OnboardingState
 
+    @ScaledMetric(relativeTo: .body) private var heroPadding: CGFloat = CouchTheme.Spacing.lg
+
     var body: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
             Spacer(minLength: 0)
@@ -26,7 +28,7 @@ struct ScienceCurveView: View {
                 state.advance(to: .personalising)
             }
         }
-        .padding(CouchTheme.Spacing.lg)
+        .padding(heroPadding)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(CouchTheme.heroBackground.ignoresSafeArea())
         .couchStatusBar(.onHero)

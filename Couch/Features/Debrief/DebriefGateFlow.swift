@@ -260,6 +260,7 @@ private struct CompletionView: View {
             // Trigger bounce on arrival.
             try? await Task.sleep(for: .milliseconds(120))
             appeared = true
+            CouchHaptics.scorecardLand()
         }
     }
 

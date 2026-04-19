@@ -5,6 +5,8 @@ import SwiftUI
 struct SocialProofView: View {
     let state: OnboardingState
 
+    @ScaledMetric(relativeTo: .body) private var heroPadding: CGFloat = CouchTheme.Spacing.lg
+
     var body: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
             Spacer(minLength: 0)
@@ -28,7 +30,7 @@ struct SocialProofView: View {
                 state.advance(to: .stressors)
             }
         }
-        .padding(CouchTheme.Spacing.lg)
+        .padding(heroPadding)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(CouchTheme.heroBackground.ignoresSafeArea())
         .couchStatusBar(.onHero)
