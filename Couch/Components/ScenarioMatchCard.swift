@@ -100,7 +100,9 @@ struct ScenarioMatchCard: View {
 
     private var fitColor: Color {
         switch fit {
-        case .best: return CouchTheme.success
+        // "Best fit" reads as a premium yellow badge in the GO palette,
+        // using the legible on-light variant so it pops on white cards.
+        case .best: return CouchTheme.accentOnLight
         case .good: return CouchTheme.textMuted
         case .comingSoon: return CouchTheme.textMuted
         }

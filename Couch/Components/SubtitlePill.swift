@@ -47,7 +47,7 @@ struct SubtitlePill: View {
     private func leafAccent(flipped: Bool) -> some View {
         Image(systemName: "leaf.fill")
             .font(.system(size: 14, weight: .regular))
-            .foregroundStyle(CouchTheme.textMuted.opacity(0.6))
+            .foregroundStyle(CouchTheme.primary.opacity(0.6))
             .rotationEffect(.degrees(flipped ? 30 : -30))
             .scaleEffect(x: flipped ? -1 : 1, y: 1)
             .accessibilityHidden(true)

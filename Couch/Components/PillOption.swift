@@ -18,12 +18,12 @@ struct PillOption: View {
                 .padding(.horizontal, CouchTheme.Spacing.lg)
                 .background(
                     RoundedRectangle(cornerRadius: CouchTheme.Radius.option, style: .continuous)
-                        .fill(isSelected ? CouchTheme.background : CouchTheme.surfaceMuted)
+                        .fill(isSelected ? CouchTheme.primarySoft : CouchTheme.surfaceMuted)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: CouchTheme.Radius.option, style: .continuous)
                         .strokeBorder(
-                            isSelected ? CouchTheme.textPrimary : Color.clear,
+                            isSelected ? CouchTheme.primary : Color.clear,
                             lineWidth: isSelected ? 1.5 : 0
                         )
                 )

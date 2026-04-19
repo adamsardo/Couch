@@ -21,7 +21,10 @@ struct SpeakingOrb: View {
         switch mode {
         case .idle: return CouchTheme.textMuted
         case .connecting: return CouchTheme.warning
+        // Yellow accent when the student is listening — reads as a warm
+        // highlight on the dark call surface.
         case .listening: return CouchTheme.accent
+        // Brand blue when the patient is speaking.
         case .speaking: return CouchTheme.primary
         }
     }

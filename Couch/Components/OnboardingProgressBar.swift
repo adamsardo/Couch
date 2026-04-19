@@ -1,9 +1,15 @@
 import SwiftUI
 
-/// Orange-on-gray progress rail used across onboarding. Optional trailing `Skip` action.
+/// Thick pill-progress rail used across onboarding. Optional trailing `Skip`
+/// action, and customizable track / fill colours so the same control can
+/// render on white form screens (blue fill on gray) or on blue hero
+/// screens (white fill on translucent white).
 struct OnboardingProgressBar: View {
     var progress: Double
     var onSkip: (() -> Void)? = nil
+    var trackColor: Color = CouchTheme.surfaceMuted
+    var fillColor: Color = CouchTheme.primary
+    var skipColor: Color = CouchTheme.textSecondary
 
     var body: some View {
         HStack(spacing: CouchTheme.Spacing.md) {
@@ -11,9 +17,9 @@ struct OnboardingProgressBar: View {
                 let clamped = max(0, min(progress, 1))
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(CouchTheme.surfaceMuted)
+                        .fill(trackColor)
                     Capsule()
-                        .fill(CouchTheme.primary)
+                        .fill(fillColor)
                         .frame(width: proxy.size.width * clamped)
                         .animation(CouchMotion.progressFill, value: clamped)
                 }
@@ -23,7 +29,7 @@ struct OnboardingProgressBar: View {
             if let onSkip {
                 Button("Skip", action: onSkip)
                     .font(CouchTheme.Typography.bodyEmphasized)
-                    .foregroundStyle(CouchTheme.textSecondary)
+                    .foregroundStyle(skipColor)
             }
         }
     }
@@ -35,6 +41,15 @@ struct OnboardingProgressBar: View {
         OnboardingProgressBar(progress: 0.45)
         OnboardingProgressBar(progress: 0.8, onSkip: {})
         OnboardingProgressBar(progress: 1.0)
+        OnboardingProgressBar(
+            progress: 0.6,
+            onSkip: {},
+            trackColor: .white.opacity(0.25),
+            fillColor: .white,
+            skipColor: .white
+        )
+        .padding()
+        .background(CouchTheme.heroBackground)
     }
     .padding()
     .background(CouchTheme.background)
