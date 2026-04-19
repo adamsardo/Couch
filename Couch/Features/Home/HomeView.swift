@@ -1,6 +1,10 @@
 import SwiftData
 import SwiftUI
 
+/// Dashboard-style home. Top: greeting + three animated `GoRing`s for
+/// reps-this-week, streak, and average confidence. A 7-day calendar strip
+/// shows weekly cadence. Below: the full-bleed featured scenario card,
+/// optional aha-moment card, today's focus, and recent highlights.
 struct HomeView: View {
     @Bindable var profile: UserProfile
 
@@ -12,8 +16,6 @@ struct HomeView: View {
     @State private var presentedScenario: Scenario?
     @State private var presentedSessionMode: SessionMode = .voice
     @State private var showCheckpoint = false
-
-    private let weeklyRepsGoal = 3
 
     private var primaryScenario: Scenario? {
         scenarios.first(where: { $0.id == ScenarioCatalog.marcus.id }) ?? scenarios.first
@@ -27,30 +29,47 @@ struct HomeView: View {
 
     private var completedThisWeek: Int {
         let calendar = Calendar.current
-        guard let start = calendar.date(byAdding: .day, value: -7, to: .now) else { return 0 }
+        guard let start = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: .now)) else {
+            return 0
+        }
         return sessions.filter { $0.status == .completed && $0.startedAt >= start }.count
+    }
+
+    private var streakDays: Int { StreakCounter.consecutiveDays(events: streakEvents) }
+
+    private var averageConfidence: Double {
+        let values = sessions
+            .prefix(7)
+            .compactMap { $0.debrief?.confidenceAfter }
+            .map(Double.init)
+        guard !values.isEmpty else { return 0 }
+        let sum = values.reduce(0, +)
+        return sum / Double(values.count)
+    }
+
+    private var activeDayKeys: Set<String> {
+        Set(streakEvents.map(\.dayKey))
     }
 
     var body: some View {
         ScrollView {
-            VStack(spacing: CouchTheme.Spacing.lg) {
+            VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
+                greeting
+                rings.homeCardScrollTransition()
+                calendarCard.homeCardScrollTransition()
+
                 if let scenario = primaryScenario {
-                    PatientHeroCard(
+                    FeaturedScenarioCard(
                         scenario: scenario,
-                        remaining: max(0, weeklyRepsGoal - completedThisWeek),
-                        onQuickRep: { startSession(with: scenario, mode: presentedSessionMode) }
+                        subtitle: scenario.summary,
+                        onStart: { startSession(with: scenario) }
                     )
                     .homeCardScrollTransition()
                 }
 
-                StateOfMindSection(
-                    repsDone: completedThisWeek,
-                    repsGoal: weeklyRepsGoal,
-                    onCheckup: { showCheckpoint = true }
-                )
-                .homeCardScrollTransition()
-
-                if profile.ahaShown == false, lastDebrief != nil, let stressor = profile.topStressor.flatMap(FrictionStressor.init) {
+                if profile.ahaShown == false,
+                   lastDebrief != nil,
+                   let stressor = profile.topStressor.flatMap(FrictionStressor.init) {
                     AhaMomentCard(stressor: stressor) {
                         profile.ahaShown = true
                         try? modelContext.save()
@@ -70,6 +89,30 @@ struct HomeView: View {
                     RecentHighlightsCard(strengths: drill.strengths)
                         .homeCardScrollTransition()
                 }
+
+                Button {
+                    CouchHaptics.tap()
+                    showCheckpoint = true
+                } label: {
+                    HStack(spacing: CouchTheme.Spacing.sm) {
+                        Image(systemName: CouchIcons.dialMeter)
+                            .font(.footnote.weight(.bold))
+                        Text("Confidence check-up")
+                            .font(CouchTheme.Typography.bodyEmphasized)
+                        Spacer()
+                        Image(systemName: CouchIcons.arrowRight)
+                            .font(.footnote.weight(.bold))
+                    }
+                    .foregroundStyle(CouchTheme.textPrimary)
+                    .padding(CouchTheme.Spacing.md)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: CouchTheme.Radius.panel, style: .continuous)
+                            .fill(CouchTheme.primarySoft)
+                    )
+                }
+                .buttonStyle(.couchPress)
+                .homeCardScrollTransition()
             }
             .padding(.horizontal, CouchTheme.Spacing.lg)
             .padding(.top, CouchTheme.Spacing.md)
@@ -90,170 +133,98 @@ struct HomeView: View {
         }
     }
 
-    private func startSession(with scenario: Scenario, mode: SessionMode) {
-        presentedSessionMode = mode
+    // MARK: - Greeting
+
+    private var greeting: some View {
+        VStack(alignment: .leading, spacing: CouchTheme.Spacing.xxs) {
+            Text(greetingEyebrow)
+                .font(CouchTheme.Typography.eyebrow)
+                .textCase(.uppercase)
+                .kerning(1.2)
+                .foregroundStyle(CouchTheme.textMuted)
+            Text(greetingHeadline)
+                .font(.system(.largeTitle, design: .rounded, weight: .black))
+                .foregroundStyle(CouchTheme.textPrimary)
+        }
+    }
+
+    private var greetingEyebrow: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE"
+        return formatter.string(from: .now).uppercased()
+    }
+
+    private var greetingHeadline: String {
+        let name = profile.name?.trimmingCharacters(in: .whitespaces)
+        if let name, !name.isEmpty {
+            return "Hey, \(name)"
+        }
+        return "Hey there"
+    }
+
+    // MARK: - Rings
+
+    private var rings: some View {
+        HStack(spacing: CouchTheme.Spacing.md) {
+            GoRing(
+                value: Double(completedThisWeek),
+                max: Double(max(profile.weeklyRepGoal, 1)),
+                label: "Reps",
+                caption: "this week",
+                fillColor: CouchTheme.primary
+            )
+            GoRing(
+                value: Double(streakDays),
+                max: 7,
+                label: "Streak",
+                caption: streakDays == 1 ? "day" : "days",
+                fillColor: CouchTheme.accentOnLight
+            )
+            GoRing(
+                value: averageConfidence,
+                max: 5,
+                label: "Confidence",
+                caption: "avg / 5",
+                fillColor: CouchTheme.success,
+                integerValue: false
+            )
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Calendar card
+
+    private var calendarCard: some View {
+        VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
+            HStack {
+                Label("This week", systemImage: CouchIcons.calendar)
+                    .font(CouchTheme.Typography.caption.weight(.semibold))
+                    .foregroundStyle(CouchTheme.textMuted)
+                Spacer()
+                Text("\(completedThisWeek) / \(profile.weeklyRepGoal)")
+                    .font(CouchTheme.Typography.caption.weight(.bold).monospacedDigit())
+                    .foregroundStyle(CouchTheme.textSecondary)
+                    .contentTransition(.numericText())
+            }
+            CalendarStripView(activeDayKeys: activeDayKeys)
+        }
+        .padding(CouchTheme.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: CouchTheme.Radius.panel, style: .continuous)
+                .fill(CouchTheme.surfaceMuted)
+        )
+    }
+
+    // MARK: - Helpers
+
+    private func startSession(with scenario: Scenario) {
+        presentedSessionMode = profile.defaultSessionMode
         presentedScenario = scenario
     }
 }
 
-// MARK: - Hero card
-
-private struct PatientHeroCard: View {
-    let scenario: Scenario
-    let remaining: Int
-    var onQuickRep: () -> Void
-
-    var body: some View {
-        HStack(alignment: .center, spacing: CouchTheme.Spacing.md) {
-            avatarRing
-
-            VStack(alignment: .leading, spacing: CouchTheme.Spacing.xs) {
-                Text("Your AI patient")
-                    .font(CouchTheme.Typography.caption)
-                    .foregroundStyle(CouchTheme.textMuted)
-                Text(scenario.patientName)
-                    .font(CouchTheme.Typography.title)
-                    .foregroundStyle(CouchTheme.textPrimary)
-
-                Button {
-                    CouchHaptics.tap()
-                    onQuickRep()
-                } label: {
-                    HStack(spacing: CouchTheme.Spacing.xs) {
-                        Image(systemName: "waveform")
-                            .accessibilityHidden(true)
-                        Text("Quick rep")
-                            .font(CouchTheme.Typography.pill)
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, CouchTheme.Spacing.md)
-                    .padding(.vertical, CouchTheme.Spacing.sm - 2)
-                    .background(Capsule().fill(CouchTheme.textPrimary))
-                }
-                .buttonStyle(.couchPress)
-                .accessibilityLabel("Start quick rep with \(scenario.patientName)")
-            }
-            Spacer()
-        }
-        .padding(.vertical, CouchTheme.Spacing.sm - 2)
-    }
-
-    private var avatarRing: some View {
-        ZStack {
-            Circle()
-                .trim(from: 0, to: 0.85)
-                .stroke(CouchTheme.success, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                .frame(width: 74, height: 74)
-                .rotationEffect(.degrees(-90))
-                .accessibilityHidden(true)
-
-            ScenarioPortraitView(scenario: scenario, crop: .avatar(60))
-        }
-        .overlay(alignment: .bottom) {
-            Text("\(remaining) reps left")
-                .font(.system(size: 10, weight: .semibold, design: .rounded).monospacedDigit())
-                .contentTransition(.numericText())
-                .foregroundStyle(CouchTheme.textSecondary)
-                .offset(y: 16)
-        }
-    }
-}
-
-// MARK: - State of mind
-
-private struct StateOfMindSection: View {
-    let repsDone: Int
-    let repsGoal: Int
-    var onCheckup: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
-            Text("Your Practice Plan")
-                .font(CouchTheme.Typography.sectionTitle)
-                .foregroundStyle(CouchTheme.textPrimary)
-
-            VStack(spacing: 0) {
-                row(
-                    title: "Complete \(repsGoal) reps",
-                    trailing: "\(min(repsDone, repsGoal))/\(repsGoal)",
-                    trailingColor: CouchTheme.textSecondary,
-                    trailingMonospaced: true,
-                    done: repsDone >= repsGoal
-                )
-                Divider().overlay(CouchTheme.divider)
-                row(
-                    title: "Confidence check-up",
-                    trailing: nil,
-                    trailingColor: CouchTheme.primary,
-                    action: onCheckup
-                )
-            }
-            .padding(CouchTheme.Spacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: CouchTheme.Radius.panel, style: .continuous)
-                    .fill(CouchTheme.surfaceMuted)
-            )
-
-            Label("Get a personalised report on how your reps are landing.", systemImage: "list.clipboard")
-                .font(CouchTheme.Typography.caption)
-                .foregroundStyle(CouchTheme.textMuted)
-        }
-    }
-
-    @ViewBuilder
-    private func row(
-        title: String,
-        trailing: String?,
-        trailingColor: Color,
-        trailingMonospaced: Bool = false,
-        done: Bool = false,
-        action: (() -> Void)? = nil
-    ) -> some View {
-        HStack(spacing: CouchTheme.Spacing.md) {
-            Image(systemName: done ? "checkmark.circle.fill" : "circle")
-                .font(.title3)
-                .foregroundStyle(done ? CouchTheme.success : CouchTheme.textMuted)
-                .symbolEffect(.bounce, value: done)
-                .contentTransition(.symbolEffect(.replace))
-                .accessibilityHidden(true)
-            Text(title)
-                .font(CouchTheme.Typography.bodyEmphasized)
-                .foregroundStyle(CouchTheme.textPrimary)
-            Spacer()
-            if let trailing {
-                Text(trailing)
-                    .font(
-                        trailingMonospaced
-                            ? CouchTheme.Typography.bodyEmphasized.monospacedDigit()
-                            : CouchTheme.Typography.bodyEmphasized
-                    )
-                    .contentTransition(trailingMonospaced ? .numericText() : .identity)
-                    .foregroundStyle(trailingColor)
-            } else if let action {
-                Button {
-                    CouchHaptics.tap()
-                    action()
-                } label: {
-                    Text("Start")
-                        .font(CouchTheme.Typography.pill)
-                        .foregroundStyle(CouchTheme.primary)
-                        .padding(.horizontal, CouchTheme.Spacing.md)
-                        .padding(.vertical, CouchTheme.Spacing.xs + 1)
-                        .background(
-                            Capsule().fill(Color.white)
-                                .couchElevation(.sm)
-                        )
-                }
-                .buttonStyle(.couchPress)
-                .accessibilityLabel("Start \(title)")
-            }
-        }
-        .padding(.vertical, CouchTheme.Spacing.sm)
-        .accessibilityElement(children: .combine)
-    }
-}
-
-// MARK: - Today's focus
+// MARK: - Today's focus (unchanged visual, kept for continuity)
 
 private struct TodaysFocusCard: View {
     let debrief: Debrief?
@@ -303,7 +274,7 @@ private struct TodaysFocusCard: View {
     }
 }
 
-// MARK: - Confidence check-up sheet (standalone, lightweight)
+// MARK: - Confidence check-up sheet (kept)
 
 private struct ConfidenceCheckupSheet: View {
     var onClose: () -> Void
@@ -321,7 +292,7 @@ private struct ConfidenceCheckupSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
             Text("How ready do you feel right now?")
-                .font(CouchTheme.Typography.title)
+                .font(CouchTheme.Typography.titleHeavy)
                 .foregroundStyle(CouchTheme.textPrimary)
             Text("A quick gut-check between reps. Nothing gets shared.")
                 .font(CouchTheme.Typography.body)
@@ -351,8 +322,7 @@ private struct ConfidenceCheckupSheet: View {
 // MARK: - Scroll transition helper
 
 private extension View {
-    /// Subtle depth for Home cards: settle into place on entry, soften on
-    /// scroll-out. Works for vertical scrolling only.
+    /// Subtle depth for Home cards.
     func homeCardScrollTransition() -> some View {
         scrollTransition(
             topLeading: .animated(.easeOut(duration: CouchMotion.small)),

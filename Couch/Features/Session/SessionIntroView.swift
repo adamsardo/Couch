@@ -65,7 +65,7 @@ struct SessionIntroView: View {
                 outerPadding: CouchTheme.Spacing.lg
             )
             quote
-            chipStrip
+            previewTiles
         }
         .padding(.horizontal, CouchTheme.Spacing.lg)
         .padding(.top, CouchTheme.Spacing.lg)
@@ -109,43 +109,14 @@ struct SessionIntroView: View {
             .frame(maxWidth: .infinity)
     }
 
-    /// Compact horizontal chip strip. `ViewThatFits` wraps onto two rows
-    /// gracefully at XXL Dynamic Type so nothing truncates.
-    private var chipStrip: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: CouchTheme.Spacing.sm) {
-                chip(icon: "clock", text: "~10 min")
-                chip(icon: "target", text: "Stay curious")
-                chip(icon: "flag.checkered", text: "3 next moves")
-            }
-            VStack(alignment: .leading, spacing: CouchTheme.Spacing.xs) {
-                HStack(spacing: CouchTheme.Spacing.sm) {
-                    chip(icon: "clock", text: "~10 min")
-                    chip(icon: "target", text: "Stay curious")
-                }
-                chip(icon: "flag.checkered", text: "3 next moves")
-            }
+    /// Stat-tile strip previewing what to expect from the rep. Keeps the
+    /// intro card glance-readable on narrow widths.
+    private var previewTiles: some View {
+        HStack(spacing: CouchTheme.Spacing.sm) {
+            StatTile(value: "~10", caption: "Minutes")
+            StatTile(value: "~12", caption: "Turns")
+            StatTile(value: "3", caption: "Next moves")
         }
-    }
-
-    private func chip(icon: String, text: String) -> some View {
-        HStack(spacing: CouchTheme.Spacing.xs) {
-            Image(systemName: icon)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(CouchTheme.textPrimary)
-                .accessibilityHidden(true)
-            Text(text)
-                .font(CouchTheme.Typography.caption.weight(.semibold))
-                .foregroundStyle(CouchTheme.textPrimary)
-                .minimumScaleFactor(0.9)
-                .lineLimit(1)
-        }
-        .padding(.horizontal, CouchTheme.Spacing.md)
-        .padding(.vertical, CouchTheme.Spacing.xs + 2)
-        .background(
-            Capsule().fill(CouchTheme.surfaceMuted)
-        )
-        .accessibilityElement(children: .combine)
     }
 
     // MARK: - CTA
