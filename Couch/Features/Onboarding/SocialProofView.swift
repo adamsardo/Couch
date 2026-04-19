@@ -31,6 +31,7 @@ struct SocialProofView: View {
         .padding(CouchTheme.Spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(CouchTheme.heroBackground.ignoresSafeArea())
+        .couchStatusBar(.onHero)
     }
 }
 

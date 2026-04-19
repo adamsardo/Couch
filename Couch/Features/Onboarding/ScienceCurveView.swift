@@ -29,6 +29,7 @@ struct ScienceCurveView: View {
         .padding(CouchTheme.Spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(CouchTheme.heroBackground.ignoresSafeArea())
+        .couchStatusBar(.onHero)
     }
 
     private var headlineLead: String {

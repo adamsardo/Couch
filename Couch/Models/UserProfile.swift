@@ -12,6 +12,11 @@ final class UserProfile {
     var notificationsEnabled: Bool
     var onboardedAt: Date?
     var ahaShown: Bool
+    /// Weekly rep target used by the home dashboard ring. Defaults to 3.
+    var weeklyRepGoal: Int
+    /// Preferred default session mode (voice vs text) used when launching
+    /// a rep from Home or the quick-rep accessory. Defaults to voice.
+    var defaultSessionModeRaw: String
 
     init(
         name: String? = nil,
@@ -22,7 +27,9 @@ final class UserProfile {
         goals: [String] = [],
         notificationsEnabled: Bool = false,
         onboardedAt: Date? = nil,
-        ahaShown: Bool = false
+        ahaShown: Bool = false,
+        weeklyRepGoal: Int = 3,
+        defaultSessionMode: SessionMode = .voice
     ) {
         self.name = name
         self.yearLevel = yearLevel
@@ -33,6 +40,13 @@ final class UserProfile {
         self.notificationsEnabled = notificationsEnabled
         self.onboardedAt = onboardedAt
         self.ahaShown = ahaShown
+        self.weeklyRepGoal = weeklyRepGoal
+        self.defaultSessionModeRaw = defaultSessionMode.rawValue
+    }
+
+    var defaultSessionMode: SessionMode {
+        get { SessionMode(rawValue: defaultSessionModeRaw) ?? .voice }
+        set { defaultSessionModeRaw = newValue.rawValue }
     }
 }
 

@@ -85,13 +85,19 @@ private struct OnboardingChrome: ViewModifier {
         content
             .safeAreaInset(edge: .top, spacing: 0) {
                 if showsProgressBar {
-                    OnboardingProgressBar(
-                        progress: state.progress(for: step),
-                        onSkip: canSkip ? onSkip : nil,
-                        trackColor: trackColor,
-                        fillColor: fillColor,
-                        skipColor: skipColor
-                    )
+                    HStack(spacing: CouchTheme.Spacing.md) {
+                        SegmentedProgressBar(
+                            current: state.stepIndex(for: step),
+                            total: state.visibleStepCount,
+                            trackColor: trackColor,
+                            fillColor: fillColor
+                        )
+                        if canSkip {
+                            Button("Skip", action: onSkip)
+                                .font(CouchTheme.Typography.bodyEmphasized)
+                                .foregroundStyle(skipColor)
+                        }
+                    }
                     .padding(.horizontal, CouchTheme.Spacing.lg)
                     .padding(.vertical, 10)
                     .background(chromeBackground)
