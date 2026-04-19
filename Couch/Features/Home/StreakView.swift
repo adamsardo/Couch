@@ -12,7 +12,7 @@ struct StreakView: View {
                 Label("Momentum", systemImage: "flame")
                     .labelStyle(.titleOnly)
                     .font(CouchTheme.Typography.caption)
-                    .foregroundStyle(CouchTheme.accent)
+                    .foregroundStyle(CouchTheme.accentOnLight)
                 Text(streakTitle)
                     .font(CouchTheme.Typography.cardTitle.monospacedDigit())
                     .foregroundStyle(CouchTheme.textPrimary)
@@ -33,7 +33,13 @@ struct StreakView: View {
     private var flame: some View {
         Image(systemName: "flame.fill")
             .font(.system(size: 34, weight: .bold))
-            .foregroundStyle(CouchTheme.accent)
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [CouchTheme.accent, CouchTheme.accentOnLight],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
             .symbolEffect(
                 .variableColor.iterative.reversing,
                 options: .repeating,

@@ -11,7 +11,7 @@ struct AhaMomentCard: View {
             HStack(alignment: .top) {
                 Label("That just happened", systemImage: "sparkles")
                     .font(CouchTheme.Typography.caption)
-                    .foregroundStyle(CouchTheme.accent)
+                    .foregroundStyle(CouchTheme.accentOnLight)
                 Spacer()
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
@@ -30,7 +30,7 @@ struct AhaMomentCard: View {
                 .foregroundStyle(CouchTheme.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .couchGlassCard(tint: CouchTheme.accent.opacity(0.15))
+        .couchGlassCard(tint: CouchTheme.accent.opacity(0.22))
         .accessibilityElement(children: .combine)
     }
 }

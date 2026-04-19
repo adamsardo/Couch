@@ -8,7 +8,7 @@ struct MicroFocusCard: View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
             Label("Carry into your next rep", systemImage: "target")
                 .font(CouchTheme.Typography.caption)
-                .foregroundStyle(CouchTheme.accent)
+                .foregroundStyle(CouchTheme.accentOnLight)
             Text(title.isEmpty ? "Pick a focus next time" : title)
                 .font(CouchTheme.Typography.cardTitle)
                 .foregroundStyle(CouchTheme.textPrimary)
@@ -19,6 +19,6 @@ struct MicroFocusCard: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .couchGlassCard(tint: CouchTheme.accent.opacity(0.08))
+        .couchGlassCard(tint: CouchTheme.accent.opacity(0.14))
     }
 }

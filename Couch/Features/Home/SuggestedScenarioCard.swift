@@ -8,7 +8,7 @@ struct SuggestedScenarioCard: View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
             Label("Today's suggestion", systemImage: "sparkles")
                 .font(CouchTheme.Typography.caption)
-                .foregroundStyle(CouchTheme.accent)
+                .foregroundStyle(CouchTheme.accentOnLight)
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "person.crop.circle.fill")
                     .font(.system(size: 36))
