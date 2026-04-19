@@ -7,7 +7,7 @@ struct NameView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
             Text("What's your name?")
-                .font(CouchTheme.Typography.display)
+                .font(CouchTheme.Typography.displayHeavy)
                 .foregroundStyle(CouchTheme.textPrimary)
                 .padding(.top, CouchTheme.Spacing.md)
 

@@ -2,7 +2,9 @@ import SwiftData
 import SwiftUI
 
 /// Owns the onboarding NavigationStack. Each step gets a single, clear next action
-/// and the orange progress bar at the top indicates flow progress.
+/// and a thick progress rail at the top indicates flow progress. Blue-hero
+/// steps swap to a white-on-blue chrome; white-form steps keep the
+/// default blue-on-gray rail.
 struct OnboardingFlow: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
@@ -66,8 +68,13 @@ struct OnboardingFlow: View {
     }
 }
 
-/// Common chrome: orange progress bar and consistent background. Hidden on the
-/// personalising loader because that screen owns its own full-bleed gradient.
+/// Blue-hero onboarding steps that want a white-on-blue progress rail.
+private let heroSteps: Set<OnboardingState.Step> = [.socialProof, .scienceChart]
+
+/// Common chrome: progress bar and consistent background. Hidden on the
+/// personalising loader because that screen owns its own full-bleed gradient,
+/// and on the scenario-detail photo hero because the page draws its own
+/// floating back button.
 private struct OnboardingChrome: ViewModifier {
     let state: OnboardingState
     let step: OnboardingState.Step
@@ -80,11 +87,14 @@ private struct OnboardingChrome: ViewModifier {
                 if showsProgressBar {
                     OnboardingProgressBar(
                         progress: state.progress(for: step),
-                        onSkip: canSkip ? onSkip : nil
+                        onSkip: canSkip ? onSkip : nil,
+                        trackColor: trackColor,
+                        fillColor: fillColor,
+                        skipColor: skipColor
                     )
                     .padding(.horizontal, CouchTheme.Spacing.lg)
                     .padding(.vertical, 10)
-                    .background(CouchTheme.background)
+                    .background(chromeBackground)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -92,7 +102,30 @@ private struct OnboardingChrome: ViewModifier {
     }
 
     private var showsProgressBar: Bool {
-        step != .scenarioDetail
+        step != .scenarioDetail && step != .personalising
+    }
+
+    private var isHero: Bool { heroSteps.contains(step) }
+
+    @ViewBuilder
+    private var chromeBackground: some View {
+        if isHero {
+            CouchTheme.heroBackground
+        } else {
+            CouchTheme.background
+        }
+    }
+
+    private var trackColor: Color {
+        isHero ? .white.opacity(0.25) : CouchTheme.surfaceMuted
+    }
+
+    private var fillColor: Color {
+        isHero ? .white : CouchTheme.primary
+    }
+
+    private var skipColor: Color {
+        isHero ? .white.opacity(0.9) : CouchTheme.textSecondary
     }
 }
 
