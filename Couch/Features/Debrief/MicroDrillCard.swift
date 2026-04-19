@@ -7,7 +7,7 @@ struct MicroDrillCard: View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.md) {
             Label("Micro-drill", systemImage: "target")
                 .font(CouchTheme.Typography.cardTitle)
-                .foregroundStyle(CouchTheme.accent)
+                .foregroundStyle(CouchTheme.accentOnLight)
             Text(payload.title)
                 .font(CouchTheme.Typography.title)
                 .foregroundStyle(CouchTheme.textPrimary)
