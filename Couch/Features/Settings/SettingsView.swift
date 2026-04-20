@@ -16,7 +16,7 @@ struct SettingsView: View {
                 Section {
                     profileRow
                 } header: {
-                    Text("Profile").textCase(nil)
+                    sectionHeader("Profile")
                 }
 
                 Section {
@@ -65,17 +65,19 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    Text("Practice plan").textCase(nil)
+                    sectionHeader("Practice plan")
                 } footer: {
-                    Text("Used for your Home ring and the Quick Rep accessory.")
+                    sectionFooter("Used for your Home ring and the Quick Rep accessory.")
                 }
 
-                Section("Notifications") {
+                Section {
                     Toggle("Allow reminders", isOn: $profile.notificationsEnabled)
                         .tint(CouchTheme.primary)
+                } header: {
+                    sectionHeader("Notifications")
                 }
 
-                Section("About") {
+                Section {
                     Link(destination: URL(string: "https://example.com/privacy")!) {
                         HStack {
                             Label {
@@ -108,6 +110,8 @@ struct SettingsView: View {
                                 .accessibilityHidden(true)
                         }
                     }
+                } header: {
+                    sectionHeader("About")
                 }
 
                 Section {
@@ -126,6 +130,7 @@ struct SettingsView: View {
             .scrollContentBackground(.hidden)
             .background(CouchTheme.background.ignoresSafeArea())
             .navigationTitle("Settings")
+            .couchBottomClearance(120)
             .alert("Delete all local data?", isPresented: $confirmDelete) {
                 Button("Delete", role: .destructive) { deleteEverything() }
                 Button("Cancel", role: .cancel) {}
@@ -154,6 +159,18 @@ struct SettingsView: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, CouchTheme.Spacing.xxs)
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .textCase(nil)
+            .font(CouchTheme.Typography.caption.weight(.semibold))
+            .foregroundStyle(CouchTheme.textSecondary)
+    }
+
+    private func sectionFooter(_ text: String) -> some View {
+        Text(text)
+            .foregroundStyle(CouchTheme.textSecondary)
     }
 
     private var avatar: some View {

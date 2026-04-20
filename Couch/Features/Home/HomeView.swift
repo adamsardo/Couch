@@ -120,6 +120,7 @@ struct HomeView: View {
             .animation(CouchMotion.stateChange, value: profile.ahaShown)
         }
         .background(CouchTheme.background.ignoresSafeArea())
+        .couchBottomClearance(120)
         .fullScreenCover(item: $presentedScenario) { scenario in
             SessionContainer(
                 scenario: scenario,

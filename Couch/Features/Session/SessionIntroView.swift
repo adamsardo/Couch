@@ -16,12 +16,13 @@ struct SessionIntroView: View {
         ScrollView {
             VStack(spacing: 0) {
                 hero
-                    .containerRelativeFrame(.vertical) { length, _ in length * 0.58 }
+                    .containerRelativeFrame(.vertical) { length, _ in length * 0.46 }
 
                 sheetCard
                     .offset(y: -CouchTheme.Radius.sheet)
                     .padding(.bottom, -CouchTheme.Radius.sheet)
             }
+            .padding(.bottom, 112)
         }
         .scrollIndicators(.hidden)
         .background(CouchTheme.background.ignoresSafeArea())

@@ -85,6 +85,7 @@ struct HistoryView: View {
                 .animation(CouchMotion.stateChange, value: window)
             }
             .background(CouchTheme.background.ignoresSafeArea())
+            .couchBottomClearance(120)
             .navigationTitle("History")
         }
     }
