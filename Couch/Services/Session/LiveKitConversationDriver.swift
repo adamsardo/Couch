@@ -234,7 +234,7 @@ extension LiveKitConversationDriver: RoomDelegate {
         _ room: Room,
         participant: RemoteParticipant?,
         didReceiveData data: Data,
-        topic: String?
+        forTopic topic: String
     ) {
         // Agents publish transcription segments under the "lk.transcription"
         // topic. Anything else we ignore — the app does not need generic

@@ -4,7 +4,7 @@ import OSLog
 /// Payload posted to the backend token endpoint. Kept deliberately small —
 /// the server is the source of truth for scenario config, prompts, and
 /// avatar provider identity (PRD §6.4).
-struct LiveKitTokenRequest: Encodable {
+nonisolated struct LiveKitTokenRequest: Encodable, Sendable {
     let scenarioId: String
     let mode: String
     let participantName: String?
@@ -19,9 +19,9 @@ struct LiveKitTokenRequest: Encodable {
 }
 
 /// Response shape from `POST /v1/sessions/token` on the Couch backend.
-struct LiveKitTokenResponse: Decodable, Sendable {
-    struct SessionBlock: Decodable, Sendable {
-        struct Avatar: Decodable, Sendable {
+nonisolated struct LiveKitTokenResponse: Decodable, Sendable {
+    nonisolated struct SessionBlock: Decodable, Sendable {
+        nonisolated struct Avatar: Decodable, Sendable {
             let enabled: Bool
             let provider: String
             let startTimeoutSeconds: Double

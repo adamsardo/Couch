@@ -55,12 +55,10 @@ final class SessionCoordinator {
 
     private var driver: ConversationDriver?
     private var liveKitDriver: LiveKitConversationDriver? { driver as? LiveKitConversationDriver }
-    // `nonisolated(unsafe)` so the nonisolated `deinit` can still reach
-    // into these Task handles to cancel them when the coordinator is
-    // deallocated. They're only ever written from the main actor, and
-    // `Task` is Sendable, so the access is safe in practice.
-    nonisolated(unsafe) private var eventTask: Task<Void, Never>?
-    nonisolated(unsafe) private var timerTask: Task<Void, Never>?
+    // These task handles are internal coordinator bookkeeping and should not
+    // participate in `@Observable` tracking.
+    @ObservationIgnored private var eventTask: Task<Void, Never>?
+    @ObservationIgnored private var timerTask: Task<Void, Never>?
     private var sessionID: PersistentIdentifier?
     private var startedAt: Date?
     /// Last rapport score we fired a milestone haptic for. Monotonically

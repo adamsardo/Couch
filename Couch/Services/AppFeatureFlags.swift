@@ -20,7 +20,7 @@ nonisolated struct AppFeatureFlags: Sendable {
     /// meant to change across app launches.
     static let current: AppFeatureFlags = .resolved()
 
-    private static func resolved() -> AppFeatureFlags {
+    nonisolated private static func resolved() -> AppFeatureFlags {
         let provider = SecretsProvider.shared
         // Default OFF for the migration. Flip to ON once the backend is up.
         let livekit = provider.boolValue(
@@ -38,7 +38,7 @@ nonisolated struct AppFeatureFlags: Sendable {
     }
 }
 
-enum FeatureFlagKeys {
-    static let liveKitTransportEnabled = "COUCH_LIVEKIT_ENABLED"
-    static let avatarsEnabled = "COUCH_AVATARS_ENABLED"
+nonisolated enum FeatureFlagKeys {
+    nonisolated static let liveKitTransportEnabled = "COUCH_LIVEKIT_ENABLED"
+    nonisolated static let avatarsEnabled = "COUCH_AVATARS_ENABLED"
 }
