@@ -13,11 +13,11 @@ struct MicrophonePermissionView: View {
 
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
                 HighlightedText(
-                    fullText: "Your voice makes it real.",
+                    fullText: "Voice makes the rep feel real.",
                     highlight: "voice",
                     font: CouchTheme.Typography.title
                 )
-                Text("We'll ask iOS for microphone access on the next tap. Audio stays on your device during the live conversation — switch to text any time.")
+                Text("We'll ask iOS for microphone access on the next tap. You can switch to text mode any time.")
                     .font(CouchTheme.Typography.body)
                     .foregroundStyle(CouchTheme.textSecondary)
             }

@@ -1,16 +1,23 @@
 import SwiftUI
 
 /// Wraps the intro + live flow for a single session presentation. Used by
-/// HomeView's "Quick rep" and by the RootTabView bottom accessory.
+/// HomeView's "Run a rep" and by the RootTabView bottom accessory.
 struct SessionContainer: View {
+    @Environment(\.dismiss) private var dismiss
+
     let scenario: Scenario
     let mode: SessionMode
     var onClose: () -> Void
 
     var body: some View {
         NavigationStack {
-            SessionIntroBridge(scenario: scenario, mode: mode, onClose: onClose)
+            SessionIntroBridge(scenario: scenario, mode: mode, onClose: close)
         }
+    }
+
+    private func close() {
+        onClose()
+        dismiss()
     }
 }
 
@@ -28,7 +35,7 @@ private struct SessionIntroBridge: View {
         } else {
             SessionIntroView(
                 scenario: scenario,
-                onBack: { onClose() },
+                onBack: onClose,
                 onStart: { didStart = true }
             )
         }

@@ -1,31 +1,29 @@
 import SwiftUI
 
-/// 2-column grid of university logos shown on the social-proof marketing screen.
-/// Image assets live in `Assets.xcassets` under each entry's `assetName`.
+/// 2-column grid of student-first practice promises shown on the onboarding
+/// proof screen. If an asset is missing, the text chip still carries the idea.
 struct SocialProofGrid: View {
-    struct University: Identifiable, Equatable {
+    struct ProofItem: Identifiable, Equatable {
         let id = UUID()
         let displayName: String
         let assetName: String
     }
 
-    var caption: String = "Our method draws on evidence from"
-    var universities: [University] = SocialProofGrid.go8
-    /// Colour of the "Our method draws on evidence from" caption.
+    var caption: String = "Built for placement-bound students who need reps, not another lecture"
+    var items: [ProofItem] = SocialProofGrid.practiceSteps
+    /// Colour of the caption.
     var captionColor: Color = CouchTheme.textMuted
     /// Colour used for the placeholder label/icon when a real logo asset
-    /// is missing. Overridable so we can render on dark / blue surfaces.
+    /// is missing. Overridable so we can render on dark / brand-colour surfaces.
     var placeholderColor: Color = CouchTheme.textSecondary
 
-    /// Australian Group of Eight research-intensive universities, chosen for their
-    /// strong psychology and clinical-training programs.
-    static let go8: [University] = [
-        University(displayName: "University of Melbourne", assetName: "uni-melbourne"),
-        University(displayName: "University of Sydney", assetName: "uni-sydney"),
-        University(displayName: "UNSW Sydney", assetName: "uni-unsw"),
-        University(displayName: "Monash University", assetName: "uni-monash"),
-        University(displayName: "University of Queensland", assetName: "uni-uq"),
-        University(displayName: "Australian National University", assetName: "uni-anu")
+    static let practiceSteps: [ProofItem] = [
+        ProofItem(displayName: "Open the app", assetName: "proof-open"),
+        ProofItem(displayName: "Meet a virtual patient", assetName: "proof-patient"),
+        ProofItem(displayName: "Practise the hard part", assetName: "proof-practice"),
+        ProofItem(displayName: "Debrief calmly", assetName: "proof-debrief"),
+        ProofItem(displayName: "Repeat the skill", assetName: "proof-repeat"),
+        ProofItem(displayName: "Show up steadier", assetName: "proof-confidence")
     ]
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible())]
@@ -38,22 +36,22 @@ struct SocialProofGrid: View {
                 .multilineTextAlignment(.center)
 
             LazyVGrid(columns: columns, spacing: CouchTheme.Spacing.lg) {
-                ForEach(universities) { uni in
-                    LogoTile(university: uni, placeholderColor: placeholderColor)
+                ForEach(items) { item in
+                    ProofTile(item: item, placeholderColor: placeholderColor)
                 }
             }
         }
     }
 }
 
-private struct LogoTile: View {
-    let university: SocialProofGrid.University
+private struct ProofTile: View {
+    let item: SocialProofGrid.ProofItem
     var placeholderColor: Color
 
     var body: some View {
         Group {
-            if UIImage(named: university.assetName) != nil {
-                Image(university.assetName)
+            if UIImage(named: item.assetName) != nil {
+                Image(item.assetName)
                     .resizable()
                     .renderingMode(.original)
                     .scaledToFit()
@@ -63,15 +61,15 @@ private struct LogoTile: View {
         }
         .frame(height: 56)
         .frame(maxWidth: .infinity)
-        .accessibilityLabel(university.displayName)
+        .accessibilityLabel(item.displayName)
     }
 
     private var placeholder: some View {
         HStack(spacing: 8) {
-            Image(systemName: "graduationcap.fill")
+            Image(systemName: CouchIcons.sparkles)
                 .foregroundStyle(placeholderColor)
                 .accessibilityHidden(true)
-            Text(university.displayName)
+            Text(item.displayName)
                 .font(CouchTheme.Typography.caption)
                 .foregroundStyle(placeholderColor)
                 .lineLimit(2)

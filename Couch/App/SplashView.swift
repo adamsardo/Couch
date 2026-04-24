@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// Launch splash: full-bleed blue, centred logomark that scales in with a
-/// spring, bottom-centre wordmark + powered-by credit. Auto-dismisses via
+/// Launch splash: plush mascot, wordmark, and clinical-skills promise. Auto-dismisses via
 /// the callback once `minimumDuration` has elapsed.
 struct SplashView: View {
     var minimumDuration: Duration = .milliseconds(700)
@@ -12,24 +11,28 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            CouchTheme.heroBackground
+            CouchTheme.brandWash
                 .ignoresSafeArea()
 
             VStack(spacing: CouchTheme.Spacing.lg) {
                 Spacer()
-                LogoMark(style: .pill, height: 120, tint: .white, accent: CouchTheme.primary)
+                Image("mascot-default")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 184, height: 184)
                     .scaleEffect(appeared || reduceMotion ? 1 : 0.7)
                     .opacity(appeared || reduceMotion ? 1 : 0)
                     .animation(
                         reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.72),
                         value: appeared
                     )
+                    .accessibilityHidden(true)
                 Spacer()
                 footer
             }
             .padding(.bottom, CouchTheme.Spacing.xl)
         }
-        .couchStatusBar(.onHero)
+        .couchStatusBar(.default)
         .task {
             appeared = true
             try? await Task.sleep(for: minimumDuration)
@@ -40,15 +43,11 @@ struct SplashView: View {
     }
 
     private var footer: some View {
-        VStack(spacing: CouchTheme.Spacing.xxs) {
-            Text("COUCH")
-                .font(.system(size: 28, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.9))
-                .tracking(6)
-            Text("PRACTICE THERAPY BEFORE IT COUNTS")
-                .font(.system(size: 10, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.55))
-                .tracking(2.4)
+        VStack(spacing: CouchTheme.Spacing.sm) {
+            LogoMark(style: .pill, height: 54)
+            Text("Practice therapy before it counts.")
+                .font(CouchTheme.Typography.bodyEmphasized)
+                .foregroundStyle(CouchTheme.textSecondary)
         }
     }
 }

@@ -29,12 +29,13 @@ struct FloatingBackButton: View {
             action()
         } label: {
             Image(systemName: "chevron.left")
-                .font(.body.weight(.semibold))
+                .font(.title3.weight(.semibold))
                 .foregroundStyle(tint)
                 .accessibilityHidden(true)
-                .frame(width: 40, height: 40)
+                .frame(width: 52, height: 52)
                 .modifier(BackgroundSurface(surface: surface))
         }
+        .contentShape(Circle())
         .buttonStyle(.couchPress)
         .accessibilityLabel("Back")
     }

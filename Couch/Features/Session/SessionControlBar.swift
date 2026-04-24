@@ -34,7 +34,19 @@ struct CallControlBar: View {
             .padding(.top, CouchTheme.Spacing.xxs)
         }
         .padding(.horizontal, CouchTheme.Spacing.lg)
-        .padding(.bottom, CouchTheme.Spacing.md)
+        .padding(.vertical, CouchTheme.Spacing.md)
+        .frame(maxWidth: 342)
+        .background {
+            RoundedRectangle(cornerRadius: 36, style: .continuous)
+                .fill(.black.opacity(0.18))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 36, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 36, style: .continuous)
+                        .strokeBorder(.white.opacity(0.12), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.18), radius: 24, x: 0, y: 18)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Primary buttons
@@ -150,9 +162,13 @@ struct CallTextPanel: View {
                 draft = ""
                 onSend(text)
             }
+            Spacer(minLength: 0)
         }
         .padding(CouchTheme.Spacing.lg)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(CouchTheme.background)
+        .preferredColorScheme(.light)
+        .presentationBackground(CouchTheme.background)
         .onAppear { focused = true }
     }
 

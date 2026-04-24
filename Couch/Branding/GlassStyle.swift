@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Flat "soft card" surface: white fill, hairline border, subtle shadow. Named `couchGlassCard`
-/// for backward compatibility with existing call sites.
+/// Soft card surface used across light Couch screens. The method name is
+/// retained for compatibility with existing call sites, but the visual is now
+/// a plush cream/mist card rather than old blue GO-style chrome.
 struct CouchGlassCardStyle: ViewModifier {
     var radius: CGFloat = CouchTheme.Radius.card
     var tint: Color? = nil
@@ -18,7 +19,6 @@ struct CouchGlassCardStyle: ViewModifier {
 }
 
 extension View {
-    /// Apply the flat Couch card surface.
     func couchGlassCard(radius: CGFloat = CouchTheme.Radius.card, tint: Color? = nil) -> some View {
         modifier(CouchGlassCardStyle(radius: radius, tint: tint))
     }

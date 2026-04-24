@@ -1,10 +1,8 @@
 import SwiftData
 import SwiftUI
 
-/// Dashboard-style home. Top: greeting + three animated `GoRing`s for
-/// reps-this-week, streak, and average confidence. A 7-day calendar strip
-/// shows weekly cadence. Below: the full-bleed featured scenario card,
-/// optional aha-moment card, today's focus, and recent highlights.
+/// Practice-first home. The first screen gives one dominant action: run the
+/// next rep. Progress stays visible but secondary and private.
 struct HomeView: View {
     @Bindable var profile: UserProfile
 
@@ -55,17 +53,19 @@ struct HomeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
                 greeting
-                rings.homeCardScrollTransition()
-                calendarCard.homeCardScrollTransition()
 
                 if let scenario = primaryScenario {
                     FeaturedScenarioCard(
                         scenario: scenario,
+                        ctaTitle: "Run the rep",
                         subtitle: scenario.summary,
                         onStart: { startSession(with: scenario) }
                     )
                     .homeCardScrollTransition()
                 }
+
+                rings.homeCardScrollTransition()
+                calendarCard.homeCardScrollTransition()
 
                 if profile.ahaShown == false,
                    lastDebrief != nil,
@@ -97,7 +97,7 @@ struct HomeView: View {
                     HStack(spacing: CouchTheme.Spacing.sm) {
                         Image(systemName: CouchIcons.dialMeter)
                             .font(.footnote.weight(.bold))
-                        Text("Confidence check-up")
+                        Text("Private confidence check")
                             .font(CouchTheme.Typography.bodyEmphasized)
                         Spacer()
                         Image(systemName: CouchIcons.arrowRight)
@@ -108,7 +108,7 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity)
                     .background(
                         RoundedRectangle(cornerRadius: CouchTheme.Radius.panel, style: .continuous)
-                            .fill(CouchTheme.primarySoft)
+                            .fill(CouchTheme.blushSoft)
                     )
                 }
                 .buttonStyle(.couchPress)
@@ -130,35 +130,50 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showCheckpoint) {
             ConfidenceCheckupSheet { showCheckpoint = false }
-                .presentationDetents([.medium])
+                .presentationDetents([.height(620), .large])
+                .presentationDragIndicator(.visible)
         }
     }
 
     // MARK: - Greeting
 
     private var greeting: some View {
-        VStack(alignment: .leading, spacing: CouchTheme.Spacing.xxs) {
-            Text(greetingEyebrow)
-                .font(CouchTheme.Typography.eyebrow)
-                .textCase(.uppercase)
-                .kerning(1.2)
-                .foregroundStyle(CouchTheme.textMuted)
-            Text(greetingHeadline)
-                .font(.system(.largeTitle, design: .rounded, weight: .black))
-                .foregroundStyle(CouchTheme.textPrimary)
+        HStack(alignment: .center, spacing: CouchTheme.Spacing.md) {
+            VStack(alignment: .leading, spacing: CouchTheme.Spacing.xxs) {
+                Text(greetingEyebrow)
+                    .font(CouchTheme.Typography.eyebrow)
+                    .textCase(.uppercase)
+                    .kerning(1.2)
+                    .foregroundStyle(CouchTheme.primary)
+                Text(greetingHeadline)
+                    .font(CouchTheme.Typography.displayHeavy)
+                    .foregroundStyle(CouchTheme.textPrimary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.76)
+                Text("Low stakes reps for high stakes conversations.")
+                    .font(CouchTheme.Typography.body)
+                    .foregroundStyle(CouchTheme.textSecondary)
+                    .lineLimit(2)
+            }
+            Spacer(minLength: CouchTheme.Spacing.sm)
+            Image("mascot-compact")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 64, height: 64)
+                .accessibilityHidden(true)
         }
     }
 
     private var greetingEyebrow: String {
-        Date.now.formatted(.dateTime.weekday(.wide)).uppercased()
+        "Today's plan"
     }
 
     private var greetingHeadline: String {
         let name = profile.name?.trimmingCharacters(in: .whitespaces)
         if let name, !name.isEmpty {
-            return "Hey, \(name)"
+            return "You've got this, \(name)."
         }
-        return "Hey there"
+        return "You've got this."
     }
 
     // MARK: - Rings
@@ -177,7 +192,7 @@ struct HomeView: View {
                 max: 7,
                 label: "Streak",
                 caption: streakDays == 1 ? "day" : "days",
-                fillColor: CouchTheme.accentOnLight
+                fillColor: CouchTheme.lavender
             )
             GoRing(
                 value: averageConfidence,
@@ -196,7 +211,7 @@ struct HomeView: View {
     private var calendarCard: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
             HStack {
-                Label("This week", systemImage: CouchIcons.calendar)
+                Label("Private progress", systemImage: CouchIcons.lock)
                     .font(CouchTheme.Typography.caption.weight(.semibold))
                     .foregroundStyle(CouchTheme.textMuted)
                 Spacer()
@@ -223,26 +238,26 @@ struct HomeView: View {
     }
 }
 
-// MARK: - Today's focus (unchanged visual, kept for continuity)
+// MARK: - Next skill drill
 
 private struct TodaysFocusCard: View {
     let debrief: Debrief?
 
     var body: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
-            Text("Today's focus")
+            Text("Next skill drill")
                 .font(CouchTheme.Typography.sectionTitle)
                 .foregroundStyle(CouchTheme.textPrimary)
 
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.md) {
                 HStack(spacing: CouchTheme.Spacing.xs + 2) {
-                    chip(text: "Timing")
-                    chip(text: "~10 min")
+                    chip(text: "Micro-drill")
+                    chip(text: "5-10 min")
                 }
                 .accessibilityElement(children: .combine)
                 Text(title)
                     .font(.system(.title2, design: .rounded, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(CouchTheme.textPrimary)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -251,25 +266,30 @@ private struct TodaysFocusCard: View {
             .frame(minHeight: 180, alignment: .bottomLeading)
             .background(
                 RoundedRectangle(cornerRadius: CouchTheme.Radius.sheet, style: .continuous)
-                    .fill(CouchTheme.accentGradient)
+                    .fill(CouchTheme.surface)
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: CouchTheme.Radius.sheet, style: .continuous)
+                    .strokeBorder(CouchTheme.divider, lineWidth: 1)
+            )
+            .couchElevation(.sm)
         }
     }
 
     private func chip(text: String) -> some View {
         Text(text)
             .font(CouchTheme.Typography.caption.weight(.semibold))
-            .foregroundStyle(.white)
+            .foregroundStyle(CouchTheme.primaryStrong)
             .padding(.horizontal, CouchTheme.Spacing.sm)
             .padding(.vertical, CouchTheme.Spacing.xxs)
-            .background(Capsule().fill(.white.opacity(0.22)))
+            .background(Capsule().fill(CouchTheme.primarySoft.opacity(0.6)))
     }
 
     private var title: String {
         if let debrief, !debrief.microDrillTitle.isEmpty {
             return debrief.microDrillTitle
         }
-        return "When to Reflect (And When Silence Works Better)"
+        return "Explore feelings a little deeper."
     }
 }
 
@@ -289,32 +309,41 @@ private struct ConfidenceCheckupSheet: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
-            Text("How ready do you feel right now?")
-                .font(CouchTheme.Typography.titleHeavy)
-                .foregroundStyle(CouchTheme.textPrimary)
-            Text("A quick gut-check between reps. Nothing gets shared.")
-                .font(CouchTheme.Typography.body)
-                .foregroundStyle(CouchTheme.textSecondary)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
+                    VStack(alignment: .leading, spacing: CouchTheme.Spacing.xs) {
+                        Text("How ready do you feel right now?")
+                            .font(CouchTheme.Typography.titleHeavy)
+                            .foregroundStyle(CouchTheme.textPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("A quick gut-check between reps. Nothing gets shared.")
+                            .font(CouchTheme.Typography.body)
+                            .foregroundStyle(CouchTheme.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
-            VStack(spacing: CouchTheme.Spacing.sm) {
-                ForEach(options, id: \.0) { option in
-                    PillOption(
-                        label: option.1,
-                        isSelected: selected == option.0
-                    ) { selected = option.0 }
+                    VStack(spacing: CouchTheme.Spacing.sm) {
+                        ForEach(options, id: \.0) { option in
+                            PillOption(
+                                label: option.1,
+                                isSelected: selected == option.0
+                            ) { selected = option.0 }
+                        }
+                    }
                 }
+                .padding(CouchTheme.Spacing.lg)
             }
-
-            Spacer(minLength: 0)
 
             PrimaryButton(title: "Save", isEnabled: selected != nil) {
                 onClose()
             }
+            .padding(.horizontal, CouchTheme.Spacing.lg)
+            .padding(.bottom, CouchTheme.Spacing.lg)
         }
-        .padding(CouchTheme.Spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(CouchTheme.background)
+        .preferredColorScheme(.light)
     }
 }
 
@@ -334,7 +363,7 @@ private extension View {
     }
 }
 
-// MARK: - Streak helper (used by HistoryView)
+// MARK: - Streak helper (used by Progress)
 
 enum StreakCounter {
     static func consecutiveDays(events: [StreakEvent], today: Date = .now) -> Int {

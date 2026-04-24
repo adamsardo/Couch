@@ -15,8 +15,8 @@ struct PrivacyConsentView: View {
 
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.md) {
                 HighlightedText(
-                    fullText: "Your wellbeing. Your privacy.",
-                    highlight: "wellbeing",
+                    fullText: "Practice, not therapy. Private by default.",
+                    highlight: "Private",
                     font: CouchTheme.Typography.title
                 )
 
@@ -27,7 +27,7 @@ struct PrivacyConsentView: View {
                         action: { notTherapy.toggle() }
                     )
                     ConsentCheckRow(
-                        text: "I agree to processing of my practice data on-device so Couch can personalise feedback.",
+                        text: "I agree Couch can process the practice data needed to run reps and generate feedback.",
                         isChecked: dataProcessing,
                         action: { dataProcessing.toggle() }
                     )
@@ -85,7 +85,7 @@ struct PrivacyConsentView: View {
                 .frame(width: 220, height: 220)
                 .blur(radius: 30)
 
-            Image(systemName: "shield.lefthalf.filled")
+                Image(systemName: CouchIcons.shieldCheck)
                 .font(.system(size: 110, weight: .bold))
                 .foregroundStyle(CouchTheme.accentGradient)
                 .couchElevation(.lg, tint: CouchTheme.primary)

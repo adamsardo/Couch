@@ -6,10 +6,10 @@ struct GoalsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
-                Text("What would you like to achieve with Couch?")
+                Text("What do you want the reps to build?")
                     .font(CouchTheme.Typography.titleHeavy)
                     .foregroundStyle(CouchTheme.textPrimary)
-                Text("Choose one or more areas to focus on.")
+                Text("Choose one or more skills. No lectures, just practice.")
                     .font(CouchTheme.Typography.body)
                     .foregroundStyle(CouchTheme.textSecondary)
             }

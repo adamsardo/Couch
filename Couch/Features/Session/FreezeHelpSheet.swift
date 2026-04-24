@@ -11,41 +11,52 @@ struct FreezeHelpSheet: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: CouchTheme.Spacing.md) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Stuck for a moment?")
-                    .font(CouchTheme.Typography.title)
-                Text("Pick one to drop into your text box. You decide whether to send.")
-                    .font(CouchTheme.Typography.body)
-                    .foregroundStyle(CouchTheme.textSecondary)
-            }
-            ForEach(prompts, id: \.0) { entry in
-                Button {
-                    CouchHaptics.tap()
-                    onPaste(entry.1)
-                    dismiss()
-                } label: {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(entry.0)
-                            .font(CouchTheme.Typography.cardTitle)
-                            .foregroundStyle(CouchTheme.primaryStrong)
-                        Text(entry.1)
-                            .font(CouchTheme.Typography.body)
-                            .foregroundStyle(CouchTheme.textPrimary)
-                            .multilineTextAlignment(.leading)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .couchGlassCard()
+        ScrollView {
+            VStack(alignment: .leading, spacing: CouchTheme.Spacing.md) {
+                VStack(alignment: .leading, spacing: CouchTheme.Spacing.xs) {
+                    Capsule()
+                        .fill(CouchTheme.textMuted.opacity(0.28))
+                        .frame(width: 44, height: 5)
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, CouchTheme.Spacing.xs)
+                    Text("Stuck for a moment?")
+                        .font(CouchTheme.Typography.title)
+                        .foregroundStyle(CouchTheme.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Pick one to drop into your text box. You decide whether to send.")
+                        .font(CouchTheme.Typography.body)
+                        .foregroundStyle(CouchTheme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .buttonStyle(.couchPress)
+                ForEach(prompts, id: \.0) { entry in
+                    Button {
+                        CouchHaptics.tap()
+                        onPaste(entry.1)
+                        dismiss()
+                    } label: {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(entry.0)
+                                .font(CouchTheme.Typography.cardTitle)
+                                .foregroundStyle(CouchTheme.primaryStrong)
+                            Text(entry.1)
+                                .font(CouchTheme.Typography.body)
+                                .foregroundStyle(CouchTheme.textPrimary)
+                                .multilineTextAlignment(.leading)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.88)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .couchGlassCard()
+                    }
+                    .buttonStyle(.couchPress)
+                }
             }
-            Spacer()
+            .padding(CouchTheme.Spacing.lg)
         }
-        .padding(CouchTheme.Spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(CouchTheme.background)
-        .presentationDetents([.medium])
-        .presentationDragIndicator(.visible)
+        .preferredColorScheme(.light)
+        .presentationBackground(CouchTheme.background)
     }
 }
 

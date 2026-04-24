@@ -13,7 +13,7 @@ struct ScenarioMatchView: View {
         VStack(spacing: CouchTheme.Spacing.lg) {
             header
 
-            Text("We found a best-fit first rep for you")
+            Text("Start with a realistic virtual patient")
                 .font(CouchTheme.Typography.title)
                 .foregroundStyle(CouchTheme.textPrimary)
                 .multilineTextAlignment(.center)
@@ -32,7 +32,7 @@ struct ScenarioMatchView: View {
 
             Spacer(minLength: 0)
 
-            PrimaryButton(title: "Choose", isEnabled: selectedID != nil) {
+            PrimaryButton(title: "Choose first rep", isEnabled: selectedID != nil) {
                 state.advance(to: .scenarioDetail)
             }
             .padding(.horizontal, CouchTheme.Spacing.lg)
@@ -100,8 +100,9 @@ struct ScenarioMatchView: View {
             )
         }
         let placeholders = [
-            CardModel(id: "coming-1", name: "Aisha", quote: "Help me stop spiralling.", fit: .comingSoon, portraitAsset: nil),
-            CardModel(id: "coming-2", name: "Jamie", quote: "What if I'm not cut out for this?", fit: .comingSoon, portraitAsset: nil)
+            CardModel(id: "avery", name: "Avery", quote: "Exploring self-worth and relationships", fit: .comingSoon, portraitAsset: "patient-avery"),
+            CardModel(id: "zara", name: "Zara", quote: "Managing stress and expectations", fit: .comingSoon, portraitAsset: "patient-zara"),
+            CardModel(id: "maya", name: "Maya", quote: "Navigating identity and life transitions", fit: .comingSoon, portraitAsset: "patient-maya")
         ]
         return real + placeholders
     }

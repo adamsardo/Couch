@@ -1,9 +1,9 @@
 import SwiftData
 import SwiftUI
 
-/// Tab-bar shell shown after onboarding: AI patient / History / Settings.
+/// Tab-bar shell shown after onboarding: Practice / Progress / Settings.
 /// Adopts iOS 26 tab-bar behaviors: minimize-on-scroll and a floating
-/// "Quick rep" accessory that lives above the tab bar.
+/// "Run a rep" accessory that lives above the tab bar.
 struct RootTabView: View {
     @Bindable var profile: UserProfile
 
@@ -16,17 +16,18 @@ struct RootTabView: View {
 
     var body: some View {
         TabView {
-            Tab("AI patient", systemImage: "waveform.circle.fill") {
+            Tab("Practice", systemImage: CouchIcons.practice) {
                 HomeView(profile: profile)
             }
-            Tab("History", systemImage: "list.clipboard") {
+            Tab("Progress", systemImage: CouchIcons.progress) {
                 HistoryView()
             }
-            Tab("Settings", systemImage: "gearshape") {
+            Tab("Settings", systemImage: CouchIcons.settings) {
                 SettingsView(profile: profile)
             }
         }
         .tint(CouchTheme.primary)
+        .preferredColorScheme(.light)
         .tabBarMinimizeBehavior(.onScrollDown)
         .tabViewBottomAccessory {
             if let scenario = primaryScenario {

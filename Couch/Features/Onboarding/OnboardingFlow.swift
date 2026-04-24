@@ -26,6 +26,7 @@ struct OnboardingFlow: View {
                 }
         }
         .tint(CouchTheme.primary)
+        .preferredColorScheme(.light)
         .background(CouchTheme.background.ignoresSafeArea())
         .environment(\.zoomNamespace, zoomNamespace)
     }
@@ -68,7 +69,7 @@ struct OnboardingFlow: View {
     }
 }
 
-/// Blue-hero onboarding steps that want a white-on-blue progress rail.
+/// Full-bleed onboarding steps that want a light progress rail over brand colour.
 private let heroSteps: Set<OnboardingState.Step> = [.socialProof, .scienceChart]
 
 /// Common chrome: progress bar and consistent background. Hidden on the

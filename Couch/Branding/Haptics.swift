@@ -1,43 +1,37 @@
 import UIKit
 
-/// Lightweight haptics helper. Centralised so feedback feels consistent
-/// across moments.
+/// Light haptic vocabulary for practice reps. Haptics should confirm progress
+/// without making serious clinical feedback feel gamified.
 enum CouchHaptics {
+    private static let lightImpact = UIImpactFeedbackGenerator(style: .light)
+    private static let mediumImpact = UIImpactFeedbackGenerator(style: .medium)
+    private static let successGenerator = UINotificationFeedbackGenerator()
+
+    static func tap() {
+        lightImpact.impactOccurred(intensity: 0.7)
+    }
+
+    static func stepAdvance() {
+        lightImpact.impactOccurred(intensity: 0.85)
+    }
+
     static func sessionStart() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        mediumImpact.impactOccurred(intensity: 0.75)
     }
 
     static func sessionEnd() {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        mediumImpact.impactOccurred(intensity: 0.65)
+    }
+
+    static func rapportMilestone() {
+        lightImpact.impactOccurred(intensity: 0.9)
+    }
+
+    static func scorecardLand() {
+        successGenerator.notificationOccurred(.success)
     }
 
     static func success() {
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-    }
-
-    static func warning() {
-        UINotificationFeedbackGenerator().notificationOccurred(.warning)
-    }
-
-    static func tap() {
-        UISelectionFeedbackGenerator().selectionChanged()
-    }
-
-    /// Fires when the live rapport score crosses a new milestone. Rigid,
-    /// low-intensity — should feel like a quick "you're getting through"
-    /// nudge rather than a reward.
-    static func rapportMilestone() {
-        UIImpactFeedbackGenerator(style: .rigid).impactOccurred(intensity: 0.6)
-    }
-
-    /// Soft tick on each debrief step advance — gives the progression a
-    /// physical cadence.
-    static func stepAdvance() {
-        UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.7)
-    }
-
-    /// Success feedback when the debrief scorecard lands.
-    static func scorecardLand() {
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        successGenerator.notificationOccurred(.success)
     }
 }

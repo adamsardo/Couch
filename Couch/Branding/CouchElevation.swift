@@ -1,12 +1,6 @@
 import SwiftUI
 
-/// Two-layer elevation system. Small/medium/large map to a consistent depth
-/// ladder with a warm neutral shadow that reads better on white/cream
-/// surfaces than pure black.
-///
-/// Usage:
-///     content.couchElevation(.md)            // structural card depth
-///     content.couchElevation(.lg, tint: .primary) // brand-tinted glow
+/// Soft two-layer depth ladder tuned for cream, mist, and lavender surfaces.
 enum CouchElevation {
     case sm, md, lg
 
@@ -20,29 +14,25 @@ enum CouchElevation {
         switch self {
         case .sm:
             return (
-                Layer(radius: 2, y: 1, opacity: 0.05),
+                Layer(radius: 2, y: 1, opacity: 0.06),
                 Layer(radius: 8, y: 3, opacity: 0.05)
             )
         case .md:
             return (
-                Layer(radius: 3, y: 2, opacity: 0.06),
-                Layer(radius: 18, y: 8, opacity: 0.08)
+                Layer(radius: 4, y: 2, opacity: 0.07),
+                Layer(radius: 18, y: 8, opacity: 0.09)
             )
         case .lg:
             return (
-                Layer(radius: 4, y: 3, opacity: 0.07),
-                Layer(radius: 28, y: 14, opacity: 0.11)
+                Layer(radius: 6, y: 4, opacity: 0.08),
+                Layer(radius: 30, y: 16, opacity: 0.13)
             )
         }
     }
 }
 
 extension CouchTheme {
-    /// Cool-navy shadow tone. Shifted from pure black toward the brand blue
-    /// so cards on the GO-style palette read with depth without muddying
-    /// the hue. Name retained (`shadowWarm`) to avoid sweeping rename across
-    /// every elevation call site.
-    static let shadowWarm = Color(hex: 0x0E1030)
+    static let shadowWarm = Color(hex: 0x7E6AAE)
 }
 
 private struct CouchElevationModifier: ViewModifier {
@@ -59,8 +49,6 @@ private struct CouchElevationModifier: ViewModifier {
 }
 
 extension View {
-    /// Apply a two-layer shadow matching the elevation ladder. Pass `tint`
-    /// to shift both layers toward a brand color (used for decorative glows).
     func couchElevation(_ level: CouchElevation, tint: Color? = nil) -> some View {
         modifier(CouchElevationModifier(level: level, tint: tint))
     }

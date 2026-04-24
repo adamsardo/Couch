@@ -5,7 +5,7 @@ import Foundation
 /// swap an icon everywhere it's used in a single edit.
 enum CouchIcons {
     // Sessions
-    static let quickRep = "waveform.circle.fill"
+    static let quickRep = "play.circle.fill"
     static let waveform = "waveform"
     static let micOn = "mic.fill"
     static let micOff = "mic.slash.fill"
@@ -17,8 +17,10 @@ enum CouchIcons {
     static let recordFill = "record.circle.fill"
 
     // Navigation / tabs
-    static let home = "waveform.circle.fill"
-    static let history = "list.clipboard"
+    static let practice = "bubble.left.and.bubble.right.fill"
+    static let progress = "chart.line.uptrend.xyaxis"
+    static let home = practice
+    static let history = progress
     static let settings = "gearshape"
     static let back = "chevron.left"
     static let close = "xmark"
@@ -27,6 +29,11 @@ enum CouchIcons {
     static let flame = "flame.fill"
     static let target = "target"
     static let sparkles = "sparkles"
+    static let heart = "heart.fill"
+    static let book = "book.closed.fill"
+    static let people = "person.2.fill"
+    static let lock = "lock.shield.fill"
+    static let shieldCheck = "checkmark.shield.fill"
     static let star = "star.fill"
     static let chart = "chart.line.uptrend.xyaxis"
     static let calendar = "calendar"

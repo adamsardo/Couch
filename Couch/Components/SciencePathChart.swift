@@ -9,11 +9,11 @@ import SwiftUI
 /// of the host width.
 struct SciencePathChart: View {
     enum Appearance {
-        /// Default on-white presentation: blue brand curve, gray muted curve.
+        /// Default on-white presentation: violet brand curve, gray muted curve.
         case light
-        /// On-hero presentation for the blue full-bleed marketing screen:
-        /// white brand curve with a yellow end-dot, translucent-white muted
-        /// curve, and white/yellow annotation pills.
+        /// On-hero presentation for the violet full-bleed marketing screen:
+        /// white brand curve with a peach end-dot, translucent-white muted
+        /// curve, and white/peach annotation pills.
         case onHero
     }
 
@@ -62,7 +62,7 @@ struct SciencePathChart: View {
                 )
 
                 Path { path in
-                    appendCurve(to: &path, in: size, xEnd: dotX, curve: orangeCurve)
+                    appendCurve(to: &path, in: size, xEnd: dotX, curve: brandCurve)
                 }
                 .stroke(
                     brandCurveColor,
@@ -79,7 +79,7 @@ struct SciencePathChart: View {
                     color: brandEndDotColor,
                     diameter: 13,
                     in: size,
-                    at: CGPoint(x: dotX, y: 1 - orangeCurve(dotX))
+                    at: CGPoint(x: dotX, y: 1 - brandCurve(dotX))
                 )
 
                 endLabel(
@@ -95,7 +95,7 @@ struct SciencePathChart: View {
                     color: brandEndLabelColor,
                     weight: .semibold,
                     in: size,
-                    at: CGPoint(x: dotX + 0.03, y: 1 - orangeCurve(dotX)),
+                    at: CGPoint(x: dotX + 0.03, y: 1 - brandCurve(dotX)),
                     maxWidth: size.width * 0.26
                 )
 
@@ -141,7 +141,7 @@ struct SciencePathChart: View {
     // MARK: - Curves (height on 0...1, 0 = bottom, 1 = top)
 
     /// Regular-practice trajectory: gentle start, exponential rise near the end.
-    private func orangeCurve(_ x: Double) -> Double {
+    private func brandCurve(_ x: Double) -> Double {
         let t = max(0, min(1, x / 0.70)) // normalise over the visible plot width
         return 0.30 + 0.62 * pow(t, 2.4)
     }
@@ -220,7 +220,7 @@ struct SciencePathChart: View {
     private var mutedPillFill: Color {
         switch appearance {
         case .light: return CouchTheme.textPrimary
-        case .onHero: return Color(hex: 0x1A1D80)
+        case .onHero: return CouchTheme.ink.opacity(0.72)
         }
     }
 

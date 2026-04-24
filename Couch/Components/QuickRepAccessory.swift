@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Floating "Quick rep" accessory for the tab bar. Shown inline when the
+/// Floating "Run a rep" accessory for the tab bar. Shown inline when the
 /// tab bar is collapsed and elevated above the tab bar otherwise. Gives
 /// the user a one-tap path into their next rep from anywhere in the app.
 struct QuickRepAccessory: View {
@@ -18,11 +18,11 @@ struct QuickRepAccessory: View {
                 ScenarioPortraitView(scenario: scenario, crop: .avatar(32))
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("Quick rep")
+                    Text("Run a rep")
                         .font(CouchTheme.Typography.pill)
                         .foregroundStyle(CouchTheme.textPrimary)
                     if placement != .inline {
-                        Text("with \(scenario.patientName)")
+                        Text("\(scenario.patientName) waits in the room")
                             .font(CouchTheme.Typography.caption)
                             .foregroundStyle(CouchTheme.textSecondary)
                     }
@@ -34,7 +34,7 @@ struct QuickRepAccessory: View {
                     .font(.footnote.weight(.bold))
                     .foregroundStyle(.white)
                     .padding(CouchTheme.Spacing.sm)
-                    .background(Circle().fill(CouchTheme.textPrimary))
+                    .background(Circle().fill(CouchTheme.primary))
                     .accessibilityHidden(true)
             }
             .padding(.horizontal, CouchTheme.Spacing.sm)

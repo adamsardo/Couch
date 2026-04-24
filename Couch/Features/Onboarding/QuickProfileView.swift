@@ -6,10 +6,10 @@ struct QuickProfileView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
-                Text("A little about your placement.")
+                Text("Where are you in the placement maze?")
                     .font(CouchTheme.Typography.titleHeavy)
                     .foregroundStyle(CouchTheme.textPrimary)
-                Text("Two quick taps. Skip if you'd rather just dive in.")
+                Text("Two quick taps so Couch can start at the right level.")
                     .font(CouchTheme.Typography.body)
                     .foregroundStyle(CouchTheme.textSecondary)
             }

@@ -23,6 +23,7 @@ struct DebriefGateFlow: View {
             }
         }
         .background(CouchTheme.background.ignoresSafeArea())
+        .preferredColorScheme(.light)
         .interactiveDismissDisabled(true)
         .task {
             guard coordinator == nil else { return }
@@ -164,7 +165,7 @@ private struct DebriefHeader: View {
         case .nextMoves: return "What to sharpen next"
         case .microDrill: return "Your micro-drill"
         case .confidence: return "How ready do you feel?"
-        case .completed: return "Nice rep"
+        case .completed: return "One rep stronger"
         }
     }
 
@@ -174,7 +175,7 @@ private struct DebriefHeader: View {
         case .nextMoves: return "Specific moves to try next time."
         case .microDrill: return "One focused practice prompt for your next session."
         case .confidence: return "Quick gut-check. We use this to track momentum."
-        case .completed: return "You're done. The reps compound from here."
+        case .completed: return "Reflect. Adjust. Repeat."
         }
     }
 }
@@ -235,12 +236,12 @@ private struct CompletionView: View {
         VStack(spacing: CouchTheme.Spacing.lg) {
             hero
 
-            Text("Reps compound from here.")
+            Text("Therapy is a skill.")
                 .font(CouchTheme.Typography.title)
                 .foregroundStyle(CouchTheme.textPrimary)
                 .multilineTextAlignment(.center)
 
-            Text("You can do another one now or save this one as today's win.")
+            Text("You can run another low-stakes rep now or bank this as today's win.")
                 .font(CouchTheme.Typography.body)
                 .foregroundStyle(CouchTheme.textSecondary)
                 .multilineTextAlignment(.center)
@@ -248,10 +249,10 @@ private struct CompletionView: View {
             metricStrip
 
             VStack(spacing: CouchTheme.Spacing.sm) {
-                PrimaryButton(title: "Do another rep", systemImage: "arrow.clockwise") {
+                PrimaryButton(title: "Run another rep", systemImage: "arrow.clockwise") {
                     onComplete()
                 }
-                SecondaryButton(title: "Back to home") {
+                SecondaryButton(title: "Back to Practice") {
                     onComplete()
                 }
             }
@@ -270,20 +271,28 @@ private struct CompletionView: View {
     private var hero: some View {
         ZStack {
             Circle()
-                .fill(CouchTheme.primary.opacity(0.12))
-                .frame(width: 110, height: 110)
-            Image(systemName: "sparkles")
-                .font(.system(size: 48, weight: .bold))
-                .foregroundStyle(CouchTheme.primary)
+                .fill(CouchTheme.peachSoft.opacity(0.68))
+                .frame(width: 150, height: 150)
+            Image("mascot-complete")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 126, height: 126)
                 .symbolEffect(.bounce, value: appeared)
+                .accessibilityHidden(true)
+            Text("one rep stronger")
+                .font(CouchTheme.Typography.caption.weight(.bold))
+                .foregroundStyle(CouchTheme.primary)
+                .padding(.horizontal, CouchTheme.Spacing.sm)
+                .padding(.vertical, CouchTheme.Spacing.xxs)
+                .background(Capsule().fill(CouchTheme.surface))
+                .offset(y: 66)
                 .symbolEffect(
                     .pulse.byLayer,
                     options: .repeating.speed(0.4),
                     isActive: !reduceMotion
                 )
-                .accessibilityHidden(true)
         }
-        .accessibilityLabel("Session complete")
+        .accessibilityLabel("One rep stronger")
     }
 
     private var metricStrip: some View {
@@ -325,17 +334,31 @@ private struct DebriefErrorView: View {
                 .accessibilityHidden(true)
             Text("Couldn't generate your debrief")
                 .font(CouchTheme.Typography.title)
-            Text(message)
+                .foregroundStyle(CouchTheme.textPrimary)
+                .multilineTextAlignment(.center)
+            Text(displayMessage)
                 .font(CouchTheme.Typography.body)
                 .foregroundStyle(CouchTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, CouchTheme.Spacing.md)
             VStack(spacing: CouchTheme.Spacing.sm) {
                 PrimaryButton(title: "Try again", systemImage: "arrow.clockwise", action: retry)
-                SecondaryButton(title: "Back to home", action: dismiss)
+                SecondaryButton(title: "Back to Practice", action: dismiss)
             }
         }
         .padding(CouchTheme.Spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(CouchTheme.background)
+        .preferredColorScheme(.light)
+    }
+
+    private var displayMessage: String {
+        if message.localizedCaseInsensitiveContains("OpenAI HTTP 401") {
+            return "OpenAI could not authenticate this local build. Check the current Secrets.plist key, then try again."
+        }
+        if message.localizedCaseInsensitiveContains("HTTP 401") {
+            return "Couch could not authenticate with the practice backend. Check the local credentials, then try again."
+        }
+        return message
     }
 }

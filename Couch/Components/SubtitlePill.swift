@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Editorial subtitle pill with decorative leaf accents on either side.
-/// Used on the scenario detail and session intro to frame the scenario's
-/// title + "AI-simulated patient" disclosure line.
+/// Compact scenario summary used on scenario detail and session intro.
+/// Keeps the disclosure readable without decorative symbols competing with
+/// the clinical content.
 struct SubtitlePill: View {
     let title: String
     let subtitle: String
@@ -16,23 +16,28 @@ struct SubtitlePill: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: CouchTheme.Spacing.sm) {
-            leafAccent(flipped: false)
+            Image(systemName: CouchIcons.shieldCheck)
+                .font(.callout.weight(.semibold))
+                .foregroundStyle(CouchTheme.primary)
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(CouchTheme.primarySoft.opacity(0.65)))
+                .accessibilityHidden(true)
 
-            VStack(alignment: .center, spacing: CouchTheme.Spacing.xxs) {
+            VStack(alignment: .leading, spacing: CouchTheme.Spacing.xxs) {
                 Text(title)
                     .font(CouchTheme.Typography.cardTitle)
                     .foregroundStyle(CouchTheme.textPrimary)
-                    .multilineTextAlignment(.center)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(subtitle)
                     .font(CouchTheme.Typography.caption)
-                    .foregroundStyle(CouchTheme.textMuted)
-                    .multilineTextAlignment(.center)
+                    .foregroundStyle(CouchTheme.textSecondary)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity)
-
-            leafAccent(flipped: true)
         }
-        .padding(.vertical, CouchTheme.Spacing.md)
+        .padding(.vertical, CouchTheme.Spacing.sm + 2)
         .padding(.horizontal, CouchTheme.Spacing.md)
         .background(
             RoundedRectangle(
@@ -43,21 +48,12 @@ struct SubtitlePill: View {
         )
         .accessibilityElement(children: .combine)
     }
-
-    private func leafAccent(flipped: Bool) -> some View {
-        Image(systemName: "leaf.fill")
-            .font(.system(size: 14, weight: .regular))
-            .foregroundStyle(CouchTheme.primary.opacity(0.6))
-            .rotationEffect(.degrees(flipped ? 30 : -30))
-            .scaleEffect(x: flipped ? -1 : 1, y: 1)
-            .accessibilityHidden(true)
-    }
 }
 
 #Preview {
     SubtitlePill(
-        title: "First-session intake",
-        subtitle: "AI-simulated patient. Not a real person."
+        title: "Opening up around trust",
+        subtitle: "Virtual patient. Practice, not therapy."
     )
     .padding()
     .background(CouchTheme.background)

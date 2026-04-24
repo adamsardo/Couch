@@ -3,10 +3,8 @@ import SwiftUI
 /// Primary CTA used at the bottom of every flow-driven screen.
 ///
 /// Two visual styles:
-/// - `.primary` (default): near-black pill with white label. Used on white
-///   or soft-blue surfaces.
-/// - `.onHero`: white pill with near-black label. Used on full-bleed
-///   `heroBackground` blue screens (social proof, science curve).
+/// - `.primary` (default): deep-violet pill with white label.
+/// - `.onHero`: white/cream pill with ink label over violet hero surfaces.
 struct PrimaryButton: View {
     enum Style {
         case primary
@@ -70,10 +68,10 @@ struct PrimaryButton: View {
         switch style {
         case .primary:
             if !isEnabled { return CouchTheme.surfaceMuted }
-            return CouchTheme.textPrimary
+            return CouchTheme.primary
         case .onHero:
             if !isEnabled { return Color.white.opacity(0.6) }
-            return .white
+            return CouchTheme.creamSoft
         }
     }
 
@@ -104,12 +102,12 @@ struct SecondaryButton: View {
                     .font(CouchTheme.Typography.bodyEmphasized)
             }
             .frame(maxWidth: .infinity, minHeight: 52)
-            .padding(.horizontal, CouchTheme.Spacing.md)
-            .foregroundStyle(CouchTheme.textPrimary)
-            .background(
-                RoundedRectangle(cornerRadius: CouchTheme.Radius.control, style: .continuous)
-                    .fill(CouchTheme.surfaceMuted)
-            )
+        .padding(.horizontal, CouchTheme.Spacing.md)
+        .foregroundStyle(CouchTheme.primary)
+        .background(
+            RoundedRectangle(cornerRadius: CouchTheme.Radius.control, style: .continuous)
+                .fill(CouchTheme.primarySoft.opacity(0.68))
+        )
         }
         .buttonStyle(.couchPress)
         .accessibilityLabel(title)

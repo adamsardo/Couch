@@ -3,6 +3,9 @@ import SwiftUI
 struct SuggestedScenarioCard: View {
     let scenario: Scenario
     var action: () -> Void
+    private var visibleTags: [String] {
+        scenario.tags.filter { $0 != "intake" }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
@@ -25,7 +28,7 @@ struct SuggestedScenarioCard: View {
                 Spacer()
             }
             HStack(spacing: 8) {
-                ForEach(scenario.tags, id: \.self) { tag in
+                ForEach(visibleTags, id: \.self) { tag in
                     Text(tag)
                         .font(CouchTheme.Typography.caption)
                         .padding(.horizontal, 10)

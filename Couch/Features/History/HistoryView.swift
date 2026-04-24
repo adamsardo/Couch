@@ -86,8 +86,11 @@ struct HistoryView: View {
             }
             .background(CouchTheme.background.ignoresSafeArea())
             .couchBottomClearance(120)
-            .navigationTitle("History")
+            .navigationTitle("Progress")
+            .toolbarBackground(CouchTheme.background, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
         }
+        .preferredColorScheme(.light)
     }
 
     // MARK: - Filter
@@ -135,7 +138,7 @@ struct HistoryView: View {
     private var trendCard: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
             HStack {
-                Label("Confidence trend", systemImage: CouchIcons.chart)
+                Label("Earned confidence", systemImage: CouchIcons.chart)
                     .font(CouchTheme.Typography.caption.weight(.semibold))
                     .foregroundStyle(CouchTheme.textMuted)
                 Spacer()
@@ -166,10 +169,10 @@ struct HistoryView: View {
                     isActive: !reduceMotion
                 )
                 .accessibilityHidden(true)
-            Text("No reps in this window yet.")
+            Text("No reps yet.")
                 .font(CouchTheme.Typography.cardTitle)
                 .foregroundStyle(CouchTheme.textPrimary)
-            Text("Change the filter above or finish your next rep to start building the trend.")
+            Text("Run one low-stakes conversation and start building confidence.")
                 .font(CouchTheme.Typography.body)
                 .foregroundStyle(CouchTheme.textSecondary)
                 .multilineTextAlignment(.center)

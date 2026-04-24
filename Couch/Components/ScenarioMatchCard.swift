@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A 3:4 portrait-style card used on the scenario match carousel.
-/// Selected state shows an orange border and an orange checkmark badge.
+/// A portrait-led virtual patient card used on the scenario match carousel.
+/// Selected state uses the deep-violet brand border and checkmark badge.
 struct ScenarioMatchCard: View {
     enum Fit: Equatable {
         case best
@@ -92,17 +92,15 @@ struct ScenarioMatchCard: View {
 
     private var fitLabel: String {
         switch fit {
-        case .best: return "Best fit"
-        case .good: return "Good fit"
+        case .best: return "Best first rep"
+        case .good: return "Available"
         case .comingSoon: return "Coming soon"
         }
     }
 
     private var fitColor: Color {
         switch fit {
-        // "Best fit" reads as a premium yellow badge in the GO palette,
-        // using the legible on-light variant so it pops on white cards.
-        case .best: return CouchTheme.accentOnLight
+        case .best: return CouchTheme.primary
         case .good: return CouchTheme.textMuted
         case .comingSoon: return CouchTheme.textMuted
         }

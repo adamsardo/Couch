@@ -6,10 +6,10 @@ struct StressorsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.lg) {
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
-                Text("What's most challenging about practising right now?")
+                Text("What makes placement feel bigger than it should?")
                     .font(CouchTheme.Typography.titleHeavy)
                     .foregroundStyle(CouchTheme.textPrimary)
-                Text("Select all that apply — your answers stay on your device.")
+                Text("Select all that apply. This shapes your first low-stakes rep.")
                     .font(CouchTheme.Typography.body)
                     .foregroundStyle(CouchTheme.textSecondary)
             }

@@ -3,17 +3,46 @@ import SwiftUI
 
 @main
 struct CouchApp: App {
-    private let modelContainer: ModelContainer = AppModelContainer.make()
+    private let modelContainer: ModelContainer = {
+        if ProcessInfo.processInfo.arguments.contains("-CouchUITest") {
+            return AppModelContainer.previewContainer()
+        }
+        return AppModelContainer.make()
+    }()
 
     var body: some Scene {
         WindowGroup {
-            SplashHost {
-                AppRoot()
-            }
+            appContent
             .modelContainer(modelContainer)
             .tint(CouchTheme.primary)
             .background(CouchTheme.background.ignoresSafeArea())
         }
+    }
+
+    @ViewBuilder
+    private var appContent: some View {
+        #if DEBUG
+        if VisualQARoute.current != nil {
+            rootContent
+        } else {
+            SplashHost { rootContent }
+        }
+        #else
+        SplashHost { rootContent }
+        #endif
+    }
+
+    @ViewBuilder
+    private var rootContent: some View {
+        #if DEBUG
+        if let route = VisualQARoute.current {
+            VisualQARoot(route: route)
+        } else {
+            AppRoot()
+        }
+        #else
+        AppRoot()
+        #endif
     }
 }
 

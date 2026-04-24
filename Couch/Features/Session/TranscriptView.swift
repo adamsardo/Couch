@@ -24,6 +24,7 @@ struct TranscriptView: View {
                             appearance: appearance
                         )
                         .id("empty")
+                        .frame(maxWidth: appearance == .dark ? 320 : .infinity, alignment: .leading)
                         .transition(.opacity.animation(CouchMotion.entrance))
                     } else {
                         ForEach(turns) { turn in
@@ -119,6 +120,7 @@ private struct TurnBubble: View {
                 radius: CouchTheme.Radius.bubble,
                 tint: turn.role == .user ? CouchTheme.primary.opacity(0.18) : nil
             )
+            .frame(maxWidth: 300, alignment: .leading)
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
@@ -192,9 +194,10 @@ private struct EmptyStateBubble: View {
         Text(text)
             .font(CouchTheme.Typography.body)
             .foregroundStyle(appearance == .dark ? Color.white.opacity(0.75) : CouchTheme.textSecondary)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
-            .padding(CouchTheme.Spacing.md)
+            .multilineTextAlignment(appearance == .dark ? .leading : .center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, CouchTheme.Spacing.md)
+            .padding(.vertical, CouchTheme.Spacing.sm)
             .modifier(EmptyBubbleBackground(appearance: appearance))
     }
 }
@@ -206,7 +209,14 @@ private struct EmptyBubbleBackground: ViewModifier {
         let innerRadius = CouchTheme.Radius.inner(of: CouchTheme.Radius.bubble, padding: 2)
         switch appearance {
         case .dark:
-            content.couchGlassRoundedRect(radius: innerRadius)
+            content.background(
+                RoundedRectangle(cornerRadius: innerRadius, style: .continuous)
+                    .fill(.black.opacity(0.48))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: innerRadius, style: .continuous)
+                    .strokeBorder(.white.opacity(0.14), lineWidth: 1)
+            )
         case .light:
             content.background(
                 RoundedRectangle(cornerRadius: innerRadius, style: .continuous)

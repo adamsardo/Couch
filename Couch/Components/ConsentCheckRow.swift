@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Consent row with an orange check bullet and rich-text body. Used on the privacy screen.
+/// Consent row with a violet check bullet and rich-text body. Used on the privacy screen.
 struct ConsentCheckRow: View {
     let text: LocalizedStringKey
     var isChecked: Bool

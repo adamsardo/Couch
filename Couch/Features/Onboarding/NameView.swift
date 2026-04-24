@@ -10,6 +10,9 @@ struct NameView: View {
                 .font(CouchTheme.Typography.displayHeavy)
                 .foregroundStyle(CouchTheme.textPrimary)
                 .padding(.top, CouchTheme.Spacing.md)
+            Text("So your practice coach can speak like a human, not a worksheet.")
+                .font(CouchTheme.Typography.body)
+                .foregroundStyle(CouchTheme.textSecondary)
 
             TextField("Your name", text: $state.name)
                 .font(CouchTheme.Typography.bodyEmphasized)

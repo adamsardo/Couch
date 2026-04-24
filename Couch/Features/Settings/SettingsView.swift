@@ -65,9 +65,9 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    sectionHeader("Practice plan")
+                    sectionHeader("Practice rhythm")
                 } footer: {
-                    sectionFooter("Used for your Home ring and the Quick Rep accessory.")
+                    sectionFooter("Used for your private progress rings and one-tap rep launcher.")
                 }
 
                 Section {
@@ -111,7 +111,9 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    sectionHeader("About")
+                    sectionHeader("Privacy and terms")
+                } footer: {
+                    sectionFooter("Couch is practice, not therapy. Your reps are private by default.")
                 }
 
                 Section {
@@ -119,7 +121,7 @@ struct SettingsView: View {
                         confirmDelete = true
                     } label: {
                         Label {
-                            Text("Delete my data")
+                            Text("Reset local practice data")
                         } icon: {
                             Image(systemName: "trash")
                                 .symbolEffect(.bounce, value: confirmDelete)
@@ -130,17 +132,20 @@ struct SettingsView: View {
             .scrollContentBackground(.hidden)
             .background(CouchTheme.background.ignoresSafeArea())
             .navigationTitle("Settings")
+            .toolbarBackground(CouchTheme.background, for: .navigationBar)
+            .toolbarColorScheme(.light, for: .navigationBar)
             .couchBottomClearance(120)
-            .alert("Delete all local data?", isPresented: $confirmDelete) {
+            .alert("Reset local practice data?", isPresented: $confirmDelete) {
                 Button("Delete", role: .destructive) { deleteEverything() }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Sessions, reflections, and preferences will be removed from this device. This can't be undone.")
+                Text("Sessions, debriefs, streaks, and preferences will be removed from this device. This can't be undone.")
             }
             .onChange(of: profile.notificationsEnabled) { _, _ in
                 try? modelContext.save()
             }
         }
+        .preferredColorScheme(.light)
     }
 
     // MARK: - Profile row

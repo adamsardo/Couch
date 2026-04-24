@@ -1,13 +1,13 @@
 import SwiftUI
 
 /// Generic 1-up stat block: big numeric (monospaced), caption below. Use
-/// inside `HStack`/`LazyVGrid` to build 2- or 3-up stat rows on History
+/// inside `HStack`/`LazyVGrid` to build 2- or 3-up stat rows on Progress
 /// rows, debrief scorecards, and session intro.
 struct StatTile: View {
     var value: String
     var caption: String
     var trend: Trend? = nil
-    var valueFont: Font = .system(.title2, design: .rounded, weight: .heavy).monospacedDigit()
+    var valueFont: Font = .system(.title2, design: .rounded, weight: .bold).monospacedDigit()
     var captionColor: Color = CouchTheme.textMuted
     var valueColor: Color = CouchTheme.textPrimary
     var background: Color = CouchTheme.surfaceMuted
@@ -52,8 +52,9 @@ struct StatTile: View {
             Text(caption)
                 .font(CouchTheme.Typography.caption.weight(.semibold))
                 .foregroundStyle(captionColor)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .allowsTightening(true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(CouchTheme.Spacing.md)

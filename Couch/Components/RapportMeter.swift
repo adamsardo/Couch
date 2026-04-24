@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Thin pill-capsule shown under the call timer. Animated bar reflects the
 /// live rapport score 0–100; colour smoothly lerps from warning (low) to
-/// accent yellow (high) through the brand blue midpoint.
+/// warm accent (high) through the deep-violet midpoint.
 struct RapportMeter: View {
     /// 0–100.
     var score: Int

@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Full-bleed blue marketing hero. White text, bright yellow highlight on
-/// the key phrase, and a white pill CTA.
+/// Full-bleed violet marketing hero. White text, soft highlight on the
+/// practice promise, and a cream CTA.
 struct SocialProofView: View {
     let state: OnboardingState
 
@@ -19,10 +19,10 @@ struct SocialProofView: View {
             Spacer(minLength: 0)
 
             HighlightedText(
-                fullText: "Our science-backed practice reps help 9,000+ students show up calm.",
-                highlight: "show up calm",
+                fullText: "Low stakes reps for high stakes conversations.",
+                highlight: "Low stakes reps",
                 font: CouchTheme.Typography.displayHeavy,
-                highlightColor: CouchTheme.accent,
+                highlightColor: CouchTheme.peachSoft,
                 baseColor: .white
             )
 

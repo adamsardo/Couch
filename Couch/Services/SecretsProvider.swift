@@ -24,19 +24,19 @@ nonisolated final class SecretsProvider: Sendable {
         return string(forKey: "ELEVENLABS_API_KEY")
     }
 
-    /// OpenAI API key from Keychain (preferred) or Info.plist / env (dev
-    /// fallback).
+    /// OpenAI API key from current env / plist configuration, mirrored into
+    /// Keychain so later launches can recover when no bundled value is present.
     func openAIAPIKey() -> String? {
-        if let stored = KeychainService.shared.read(account: KeychainAccount.openAI) {
-            return stored
+        if let configured = configuredOpenAIAPIKey(), !configured.isEmpty {
+            // Keep the cache fresh. A stale Keychain value previously won over
+            // an updated Secrets.plist, which could leave local builds stuck on
+            // OpenAI 401 even after the plist was corrected.
+            if KeychainService.shared.read(account: KeychainAccount.openAI) != configured {
+                KeychainService.shared.save(configured, account: KeychainAccount.openAI)
+            }
+            return configured
         }
-        if let bundled = string(forKey: "OPENAI_API_KEY"), !bundled.isEmpty {
-            // First-run migration: cache the bundled key into the keychain so
-            // subsequent launches don't depend on a plist read.
-            KeychainService.shared.save(bundled, account: KeychainAccount.openAI)
-            return bundled
-        }
-        return nil
+        return KeychainService.shared.read(account: KeychainAccount.openAI)
     }
 
     /// Base URL of the Couch backend that mints LiveKit tokens (e.g.
@@ -71,6 +71,22 @@ nonisolated final class SecretsProvider: Sendable {
             return value
         }
         if let value = Bundle.main.object(forInfoDictionaryKey: key) as? String, !value.isEmpty {
+            return value
+        }
+        return nil
+    }
+
+    private func configuredOpenAIAPIKey() -> String? {
+        if let env = ProcessInfo.processInfo.environment["OPENAI_API_KEY"], !env.isEmpty {
+            return env
+        }
+        if let secrets = bundledSecrets(),
+           let value = secrets["OPENAI_API_KEY"] as? String,
+           !value.isEmpty {
+            return value
+        }
+        if let value = Bundle.main.object(forInfoDictionaryKey: "OPENAI_API_KEY") as? String,
+           !value.isEmpty {
             return value
         }
         return nil

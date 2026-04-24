@@ -39,7 +39,7 @@ struct ScenarioPortraitView: View {
         case .full:
             rectangularPortrait(anchor: .center)
         case .topFocused:
-            rectangularPortrait(anchor: .top)
+            rectangularPortrait(anchor: .center)
         case .avatar(let diameter):
             avatarPortrait(diameter: diameter)
         }
@@ -51,9 +51,17 @@ struct ScenarioPortraitView: View {
     private func rectangularPortrait(anchor: UnitPoint) -> some View {
         ZStack {
             if let image = resolvedImage {
-                image
-                    .resizable()
-                    .scaledToFill()
+                GeometryReader { proxy in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(
+                            width: proxy.size.width,
+                            height: proxy.size.height,
+                            alignment: anchor == .top ? .top : .center
+                        )
+                        .clipped()
+                }
             } else {
                 fallbackGradient
                     .drawingGroup()
@@ -128,25 +136,17 @@ struct ScenarioPortraitView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    CouchTheme.callSurfaceMuted,
-                    CouchTheme.callSurface
+                    CouchTheme.lavenderSoft.opacity(0.78),
+                    CouchTheme.peachSoft.opacity(0.58),
+                    CouchTheme.creamSoft
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
 
-            LinearGradient(
-                colors: [
-                    CouchTheme.primary.opacity(0.08),
-                    .clear
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
             Text(String(scenario.patientName.prefix(1)))
                 .font(.system(size: 180, weight: .bold, design: .rounded))
-                .foregroundStyle(Color.white.opacity(0.08))
+                .foregroundStyle(CouchTheme.primary.opacity(0.16))
         }
     }
 }

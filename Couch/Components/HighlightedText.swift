@@ -1,14 +1,13 @@
 import SwiftUI
 
-/// Renders a single display headline with one phrase colored in the brand orange.
+/// Renders a single display headline with one phrase colored in the brand accent.
 /// Splits on the first case-insensitive occurrence; falls back to plain text if missing.
 struct HighlightedText: View {
     let fullText: String
     let highlight: String
     var font: Font = CouchTheme.Typography.display
-    /// Defaults to the legible yellow-shifted brand colour so the highlight
-    /// reads crisply on white body surfaces. Pass `CouchTheme.accent`
-    /// explicitly for the bright yellow used on blue hero screens.
+    /// Defaults to the deep-violet accent so highlighted words read crisply
+    /// on cream and white body surfaces.
     var highlightColor: Color = CouchTheme.accentOnLight
     var baseColor: Color = CouchTheme.textPrimary
 
@@ -33,12 +32,12 @@ struct HighlightedText: View {
 #Preview {
     VStack(alignment: .leading, spacing: 16) {
         HighlightedText(
-            fullText: "Our science-backed practice reps help 9,000+ students show up calm.",
-            highlight: "show up calm"
+            fullText: "Low stakes reps for high stakes conversations.",
+            highlight: "Low stakes reps"
         )
         HighlightedText(
-            fullText: "Your wellbeing. Your privacy.",
-            highlight: "wellbeing"
+            fullText: "Practice, not therapy. Private by default.",
+            highlight: "Private"
         )
         HighlightedText(
             fullText: "Build confidence is easier with short Couch reps.",

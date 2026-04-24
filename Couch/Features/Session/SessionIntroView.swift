@@ -16,7 +16,7 @@ struct SessionIntroView: View {
         ScrollView {
             VStack(spacing: 0) {
                 hero
-                    .containerRelativeFrame(.vertical) { length, _ in length * 0.46 }
+                    .containerRelativeFrame(.vertical) { length, _ in length * 0.42 }
 
                 sheetCard
                     .offset(y: -CouchTheme.Radius.sheet)
@@ -38,8 +38,10 @@ struct SessionIntroView: View {
                 FloatingBackButton(action: onBack)
                     .padding(.leading, CouchTheme.Spacing.md)
                     .padding(.top, CouchTheme.Spacing.sm)
+                    .zIndex(20)
             }
         }
+        .preferredColorScheme(.light)
     }
 
     // MARK: - Hero
@@ -60,8 +62,8 @@ struct SessionIntroView: View {
             eyebrow
             title
             SubtitlePill(
-                title: scenario.title.capitalized,
-                subtitle: "AI-simulated patient. Not a real person.",
+                title: scenario.title,
+                subtitle: "Virtual patient. Practice, not therapy.",
                 outerRadius: CouchTheme.Radius.sheet,
                 outerPadding: CouchTheme.Spacing.lg
             )
@@ -93,10 +95,10 @@ struct SessionIntroView: View {
 
     private var title: some View {
         Text("Warm-up with \(scenario.patientName)")
-            .font(CouchTheme.Typography.display)
+            .font(CouchTheme.Typography.titleHeavy)
             .foregroundStyle(CouchTheme.textPrimary)
             .lineLimit(2)
-            .minimumScaleFactor(0.85)
+            .minimumScaleFactor(0.86)
             .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -124,7 +126,7 @@ struct SessionIntroView: View {
 
     @ViewBuilder
     private var startButton: some View {
-        let button = PrimaryButton(title: "Start conversation", systemImage: "play.fill") {
+        let button = PrimaryButton(title: "Start the rep", systemImage: "play.fill") {
             onStart()
         }
         if let ns = transitionNamespace {
@@ -138,10 +140,10 @@ struct SessionIntroView: View {
 #Preview {
     let scenario = Scenario(
         id: "marcus-intake",
-        title: "First-session intake",
+        title: "Opening up around trust",
         patientName: "Marcus",
         patientAge: 28,
-        summary: "His partner referred him. He doesn't want to be here. Stay curious, stay calm.",
+        summary: "Guarded, analytical, private. Practise trust and vulnerability without the stakes.",
         openingCue: "Marcus walks in, sits down without a word, and waits for you to start.",
         calmingCue: "Take a breath. Curiosity, not certainty.",
         elevenLabsAgentId: ""

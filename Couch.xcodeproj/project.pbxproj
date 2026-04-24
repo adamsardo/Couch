@@ -419,14 +419,14 @@
 				INFOPLIST_KEY_CFBundleIconName = AppIcon;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Couch uses your microphone so you can speak with simulated patients during practice sessions. We never share your audio.";
+				INFOPLIST_KEY_PRIVACY_POLICY_URL = "https://adamsardo.com/couch/privacy";
+				INFOPLIST_KEY_TERMS_OF_USE_URL = "https://adamsardo.com/couch/terms";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDarkContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_PRIVACY_POLICY_URL = "https://adamsardo.com/couch/privacy";
-				INFOPLIST_KEY_TERMS_OF_USE_URL = "https://adamsardo.com/couch/terms";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -463,14 +463,14 @@
 				INFOPLIST_KEY_CFBundleIconName = AppIcon;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Couch uses your microphone so you can speak with simulated patients during practice sessions. We never share your audio.";
+				INFOPLIST_KEY_PRIVACY_POLICY_URL = "https://adamsardo.com/couch/privacy";
+				INFOPLIST_KEY_TERMS_OF_USE_URL = "https://adamsardo.com/couch/terms";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDarkContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_PRIVACY_POLICY_URL = "https://adamsardo.com/couch/privacy";
-				INFOPLIST_KEY_TERMS_OF_USE_URL = "https://adamsardo.com/couch/terms";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

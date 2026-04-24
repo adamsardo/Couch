@@ -40,7 +40,7 @@ struct ScenarioDetailView: View {
         .scrollIndicators(.hidden)
         .background(CouchTheme.background)
         .safeAreaInset(edge: .bottom) {
-            PrimaryButton(title: "Nice to meet you") {
+            PrimaryButton(title: "Run this first rep") {
                 state.advance(to: .notifications)
             }
             .padding(.horizontal, CouchTheme.Spacing.lg)
@@ -79,7 +79,7 @@ struct ScenarioDetailView: View {
 
             SubtitlePill(
                 title: scenario.title.capitalized,
-                subtitle: "AI-simulated patient. Not a real person.",
+                subtitle: "Virtual patient. Practice, not therapy.",
                 outerRadius: CouchTheme.Radius.sheet,
                 outerPadding: CouchTheme.Spacing.lg
             )
@@ -92,7 +92,7 @@ struct ScenarioDetailView: View {
                 .frame(maxWidth: .infinity)
 
             VStack(alignment: .leading, spacing: CouchTheme.Spacing.sm) {
-                Text("Notes from past reps")
+                Text("What this rep builds")
                     .font(CouchTheme.Typography.cardTitle)
                     .foregroundStyle(CouchTheme.textPrimary)
 
@@ -189,18 +189,18 @@ enum SampleReviews {
     static let all: [SampleReview] = [
         SampleReview(
             stars: 5,
-            body: "Example user feedback: Marcus made me slow down. Next session I remembered to breathe before jumping to reassurance.",
-            date: "September 10, 2025"
+            body: "Rapport building: practise staying curious when a patient is guarded.",
+            date: "Skill focus"
         ),
         SampleReview(
             stars: 4,
-            body: "Example user feedback: A useful first rep. I noticed I fill silence too fast and now I catch it sooner in real chats.",
-            date: "October 8, 2025"
+            body: "Openness and trust: try one clean reflection before asking the next question.",
+            date: "Skill focus"
         ),
         SampleReview(
             stars: 5,
-            body: "Example user feedback: I was anxious before but the debrief gave me three concrete things to try in placement the next day.",
-            date: "October 22, 2025"
+            body: "Defensiveness: notice the urge to reassure, then slow the room down.",
+            date: "Skill focus"
         )
     ]
 }

@@ -26,24 +26,30 @@ struct PersonalisingLoader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: CouchTheme.Spacing.md) {
             ForEach(Array(phases.enumerated()), id: \.element.id) { index, phase in
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(phase.label)
-                        .font(CouchTheme.Typography.cardTitle)
-                        .foregroundStyle(index <= activeIndex ? CouchTheme.textPrimary : CouchTheme.textMuted)
-                    OnboardingProgressBar(progress: progress[index])
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, CouchTheme.Spacing.md)
-                        .background(
-                            RoundedRectangle(
-                                cornerRadius: CouchTheme.Radius.inner(of: CouchTheme.Radius.bubble, padding: 4),
-                                style: .continuous
-                            )
-                            .fill(CouchTheme.background)
-                            .couchElevation(.sm)
-                        )
+                VStack(alignment: .leading, spacing: CouchTheme.Spacing.xs) {
+                    HStack(spacing: CouchTheme.Spacing.xs) {
+                        Image(systemName: index < activeIndex || progress[index] >= 1 ? CouchIcons.checkmarkCircle : "circle.fill")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(index <= activeIndex ? CouchTheme.primary : CouchTheme.textMuted.opacity(0.45))
+                            .accessibilityHidden(true)
+                        Text(phase.label)
+                            .font(CouchTheme.Typography.bodyEmphasized)
+                            .foregroundStyle(index <= activeIndex ? CouchTheme.textPrimary : CouchTheme.textMuted)
+                    }
+                    OnboardingProgressBar(
+                        progress: progress[index],
+                        trackColor: CouchTheme.mist,
+                        fillColor: index <= activeIndex ? CouchTheme.primary : CouchTheme.divider
+                    )
                 }
             }
         }
+        .padding(CouchTheme.Spacing.lg)
+        .background(
+            RoundedRectangle(cornerRadius: CouchTheme.Radius.card, style: .continuous)
+                .fill(CouchTheme.surface.opacity(0.88))
+                .couchElevation(.md, tint: CouchTheme.primary)
+        )
         .task { await run() }
     }
 

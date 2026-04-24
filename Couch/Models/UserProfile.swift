@@ -69,7 +69,7 @@ enum PlacementWindow: String, CaseIterable, Identifiable, Codable, Sendable {
 enum FrictionStressor: String, CaseIterable, Identifiable, Codable, Sendable {
     case timePoor = "I'm time-poor"
     case logistics = "Booking rooms or commuting"
-    case anxiety = "Anxious about role-play"
+    case anxiety = "Anxious about live practice"
     case noPracticePartner = "No practice partner"
     case troubleFocusing = "Trouble focusing"
     case perfectionism = "Fear of getting it wrong"
@@ -100,7 +100,7 @@ enum FrictionStressor: String, CaseIterable, Identifiable, Codable, Sendable {
 enum PracticeGoal: String, CaseIterable, Identifiable, Codable, Sendable {
     case buildConfidence = "Build confidence"
     case practiseIntakes = "Practise intakes"
-    case handleResistance = "Handle resistant patients"
+    case handleResistance = "Work with defensiveness"
     case manageFreeze = "Manage freeze moments"
     case improveFeedbackUse = "Use feedback better"
     case prepForPlacement = "Prep for placement"

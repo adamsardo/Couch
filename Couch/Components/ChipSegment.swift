@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Pill-style segmented control. Used for time-window filters (7d / 30d /
-/// all-time) on History and anywhere we want a compact multi-option chip.
+/// all-time) on Progress and anywhere we want a compact multi-option chip.
 struct ChipSegment<Option: Hashable>: View {
     struct Item: Identifiable {
         let id: Option

@@ -12,7 +12,7 @@ struct NotificationsPermissionView: View {
 
             Spacer(minLength: 0)
 
-            Text("Get nudged so you don't skip your rep.")
+            Text("Gentle nudges, no scheduling drama.")
                 .font(CouchTheme.Typography.title)
                 .foregroundStyle(CouchTheme.textPrimary)
                 .multilineTextAlignment(.leading)
@@ -32,8 +32,8 @@ struct NotificationsPermissionView: View {
     private var previewStack: some View {
         VStack(spacing: CouchTheme.Spacing.sm) {
             notificationPreview(
-                title: "Session is about to start",
-                body: "Tap to begin your rep with Marcus",
+                title: "Your rep is waiting",
+                body: "Open Couch and practise with Marcus",
                 time: "10:15 PM"
             )
             notificationPreview(

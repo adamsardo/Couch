@@ -6,14 +6,14 @@ enum ScenarioCatalog {
     enum Scenarios {
         static let marcus = ScenarioBlueprint(
             id: "marcus-intake",
-            title: "First-session intake",
+            title: "Opening up around trust",
             patientName: "Marcus",
             patientAge: 28,
-            summary: "His partner referred him. He doesn't want to be here. Stay curious, stay calm.",
+            summary: "Guarded, analytical, private. Practise trust and vulnerability without the stakes.",
             openingCue: "Marcus walks in, sits down without a word, and waits for you to start.",
             calmingCue: "Take a breath. Curiosity, not certainty.",
             agentIDInfoPlistKey: "MARCUS_AGENT_ID",
-            tags: ["intake", "resistant", "minimisation"],
+            tags: ["intake", "rapport building", "openness and trust", "defensiveness"],
             preferredTransport: .liveKit,
             preferredAvatarProvider: .lemonslice
         )

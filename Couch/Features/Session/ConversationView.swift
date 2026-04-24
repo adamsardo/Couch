@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Layered in-call view. Full-bleed portrait sits behind a glass header,
 /// overlaid transcript, and a control bar. Reads as a premium video-call
-/// experience rather than a stacked form.
+/// practice experience rather than a stacked form.
 struct ConversationView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -86,7 +86,9 @@ struct ConversationView: View {
                 turns: coordinator.visibleTurns,
                 scenario: scenario
             )
-            .frame(maxHeight: 420)
+            .frame(maxHeight: 220)
+            .padding(.horizontal, CouchTheme.Spacing.md)
+            .padding(.bottom, CouchTheme.Spacing.sm)
 
             CallControlBar(
                 isMuted: coordinator.isMuted,
@@ -96,29 +98,25 @@ struct ConversationView: View {
                 onTextPanel: { showTextPanel = true },
                 onEnd: { Task { await endAndPresentDebrief(coordinator: coordinator) } }
             )
-            .background(
-                LinearGradient(
-                    colors: [.clear, .black.opacity(0.55)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea(edges: .bottom)
-                .allowsHitTesting(false)
-            )
+            .padding(.bottom, CouchTheme.Spacing.md)
         }
         .sheet(isPresented: $showFreeze) {
             FreezeHelpSheet { prompt in
                 draft = prompt
                 coordinator.recordFreezeHelpInteraction(prompt)
             }
-            .presentationDetents([.medium])
+            .presentationDetents([.height(540), .large])
+            .presentationDragIndicator(.visible)
+            .preferredColorScheme(.light)
         }
         .sheet(isPresented: $showTextPanel) {
             CallTextPanel(draft: $draft) { text in
                 showTextPanel = false
                 Task { await coordinator.sendText(text) }
             }
-            .presentationDetents([.medium])
+            .presentationDetents([.height(360), .large])
+            .presentationDragIndicator(.visible)
+            .preferredColorScheme(.light)
         }
         .overlay(alignment: .top) {
             if case .error(let message) = coordinator.phase {
@@ -161,13 +159,13 @@ private struct CallHeader: View {
                 Text(patientName)
                     .font(CouchTheme.Typography.cardTitle)
                     .foregroundStyle(.white)
-                Text("AI simulated patient")
+                Text("Virtual patient")
                     .font(CouchTheme.Typography.caption)
                     .foregroundStyle(.white.opacity(0.7))
             }
             .frame(maxWidth: .infinity)
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(patientName), AI simulated patient")
+            .accessibilityLabel("\(patientName), virtual patient")
 
             Spacer(minLength: CouchTheme.Spacing.xs)
 
@@ -304,6 +302,7 @@ private struct OverlayTranscript: View {
             scenario: scenario,
             appearance: .dark
         )
+        .frame(maxWidth: 360)
         .mask(
             LinearGradient(
                 stops: [

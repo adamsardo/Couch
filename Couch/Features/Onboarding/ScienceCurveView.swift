@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Blue-hero science-curve marketing screen. White text, yellow end-label
-/// on the brand curve, white pill CTA.
+/// Violet-hero practice-curve screen. White text, peach end-label on the
+/// brand curve, cream pill CTA.
 struct ScienceCurveView: View {
     let state: OnboardingState
 
@@ -20,7 +20,7 @@ struct ScienceCurveView: View {
                 fullText: "\(headlineLead) is easier with short Couch reps.",
                 highlight: headlineLead,
                 font: CouchTheme.Typography.displayHeavy,
-                highlightColor: CouchTheme.accent,
+                highlightColor: CouchTheme.peachSoft,
                 baseColor: .white
             )
 
