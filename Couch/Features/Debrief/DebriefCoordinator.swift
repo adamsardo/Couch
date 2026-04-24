@@ -65,13 +65,23 @@ final class DebriefCoordinator {
         if let session = modelContext.model(for: sessionID) as? Session,
            let debrief = session.debrief {
             debrief.confidenceAfter = value
-            debrief.completedAt = .now
             try? modelContext.save()
         }
     }
 
+    func completeDebrief() {
+        guard let session = modelContext.model(for: sessionID) as? Session else { return }
+        if let debrief = session.debrief {
+            debrief.completedAt = .now
+        }
+        session.status = .completed
+        insertStreakEventIfNeeded(for: session)
+        try? modelContext.save()
+    }
+
     private func persist(payload: DebriefPayload) {
         guard let session = modelContext.model(for: sessionID) as? Session else { return }
+        session.status = .awaitingDebrief
         let debrief = Debrief(
             strengths: payload.strengths,
             nextMoves: payload.nextMoves,
@@ -83,6 +93,10 @@ final class DebriefCoordinator {
             session: session
         )
         modelContext.insert(debrief)
+        try? modelContext.save()
+    }
+
+    private func insertStreakEventIfNeeded(for session: Session) {
         let event = StreakEvent(day: .now, sessionID: session.id)
         // Avoid duplicate streak events for the same calendar day.
         let key = StreakEvent.key(for: .now)
@@ -90,6 +104,5 @@ final class DebriefCoordinator {
         if (try? modelContext.fetch(descriptor).first) == nil {
             modelContext.insert(event)
         }
-        try? modelContext.save()
     }
 }

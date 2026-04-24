@@ -10,13 +10,15 @@ struct PersonalisingLoader: View {
     }
 
     var phases: [Phase]
+    var repeats: Bool
     var onFinished: () -> Void
 
     @State private var progress: [Double]
     @State private var activeIndex: Int = 0
 
-    init(phases: [Phase], onFinished: @escaping () -> Void) {
+    init(phases: [Phase], repeats: Bool = false, onFinished: @escaping () -> Void) {
         self.phases = phases
+        self.repeats = repeats
         self.onFinished = onFinished
         _progress = State(initialValue: Array(repeating: 0.0, count: phases.count))
     }
@@ -46,19 +48,25 @@ struct PersonalisingLoader: View {
     }
 
     private func run() async {
-        for (index, phase) in phases.enumerated() {
-            guard !Task.isCancelled else { return }
-            activeIndex = index
-            let steps = 40
-            let stepDuration: Duration = .seconds(phase.duration / Double(steps))
-            for step in 1...steps {
-                try? await Task.sleep(for: stepDuration)
+        repeat {
+            progress = Array(repeating: 0.0, count: phases.count)
+            for (index, phase) in phases.enumerated() {
                 guard !Task.isCancelled else { return }
-                progress[index] = Double(step) / Double(steps)
+                activeIndex = index
+                let steps = 40
+                let stepDuration: Duration = .seconds(phase.duration / Double(steps))
+                for step in 1...steps {
+                    try? await Task.sleep(for: stepDuration)
+                    guard !Task.isCancelled else { return }
+                    progress[index] = Double(step) / Double(steps)
+                }
             }
+            guard repeats else { break }
+        } while !Task.isCancelled
+        if !repeats {
+            guard !Task.isCancelled else { return }
+            onFinished()
         }
-        guard !Task.isCancelled else { return }
-        onFinished()
     }
 }
 

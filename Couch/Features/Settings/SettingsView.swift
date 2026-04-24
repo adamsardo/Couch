@@ -78,7 +78,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Link(destination: URL(string: "https://example.com/privacy")!) {
+                    Link(destination: LegalLinks.current.privacyPolicy) {
                         HStack {
                             Label {
                                 Text("Privacy Policy")
@@ -94,7 +94,7 @@ struct SettingsView: View {
                                 .accessibilityHidden(true)
                         }
                     }
-                    Link(destination: URL(string: "https://example.com/terms")!) {
+                    Link(destination: LegalLinks.current.termsOfUse) {
                         HStack {
                             Label {
                                 Text("Terms of Use")
@@ -213,6 +213,7 @@ struct SettingsView: View {
         profile.ahaShown = false
         profile.weeklyRepGoal = 3
         profile.defaultSessionMode = .voice
+        ProfileParticipantIdentityResolver.resetIdentity()
         try? modelContext.save()
     }
 }

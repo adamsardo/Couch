@@ -10,7 +10,7 @@ Guidance for coding agents working in this repository.
 - Unit tests live in `CouchTests/` and use Swift Testing.
 - UI tests live in `CouchUITests/` and use XCTest.
 - The Xcode project uses file-system synchronized groups for the main source and test folders, so adding Swift files under those folders should not usually require editing `Couch.xcodeproj/project.pbxproj`.
-- Current project settings target iPhone and iPad with iOS deployment target 26.2.
+- Current project settings target iPhone and iPad. The app target currently declares iOS deployment target 26.0; test targets use 26.2 settings.
 
 ## Build And Test
 
@@ -32,7 +32,61 @@ Run tests with an available iPhone simulator:
 xcodebuild -project Couch.xcodeproj -scheme Couch -destination 'platform=iOS Simulator,name=<available iPhone simulator>' test
 ```
 
+If `xcodebuild` reports that the active developer directory is Command Line Tools instead of full Xcode, prefix the same command with:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcodebuild -project Couch.xcodeproj -scheme Couch -destination 'generic/platform=iOS Simulator' build
+```
+
+For focused verification, run one test target at a time:
+
+```sh
+xcodebuild -project Couch.xcodeproj -scheme Couch -destination 'platform=iOS Simulator,name=<available iPhone simulator>' -only-testing:CouchTests test
+xcodebuild -project Couch.xcodeproj -scheme Couch -destination 'platform=iOS Simulator,name=<available iPhone simulator>' -only-testing:CouchUITests test
+```
+
+`-only-testing` narrows execution, but it still compiles the full app target.
+
 Use the shared `Couch` scheme unless a task explicitly needs target-level commands.
+
+## Backend LiveKit Workflow
+
+The optional LiveKit + LemonSlice backend lives in `backend/`. Use `docs/avatar-architecture.md` for the runtime flow and `backend/.env.example` for local environment keys.
+
+Set up and verify the backend:
+
+```sh
+cd backend
+npm install
+npm run build
+npm test
+```
+
+Run local LiveKit sessions with the token server and agent in separate terminals:
+
+```sh
+cd backend
+npm run token-server
+```
+
+```sh
+cd backend
+npm run agent
+```
+
+`backend/dist/` and `backend/node_modules/` are generated and ignored. Edit `backend/src/` and rebuild instead of editing generated output.
+
+TODO: `README.md` references `backend/README.md`, but that file is not present in this checkout. Keep backend operating notes in `docs/avatar-architecture.md` until a dedicated backend README exists.
+
+## Release Diagnostics
+
+For App Store orientation issues, inspect generated build settings before archiving:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcodebuild -project Couch.xcodeproj -scheme Couch -showBuildSettings | rg 'TARGETED_DEVICE_FAMILY|UISupportedInterfaceOrientations'
+```
+
+With `TARGETED_DEVICE_FAMILY = "1,2"`, keep explicit iPhone and iPad orientation settings rather than relying on a single plist key. If App Store upload warns about missing symbols for `LiveKitWebRTC.framework`, inspect the SwiftPM binary artifact first; app-target debug-information settings cannot create a dSYM for a packaged binary.
 
 ## Coding Guidelines
 

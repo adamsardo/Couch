@@ -36,7 +36,7 @@ struct ConsentCheckRow: View {
             action: {}
         )
         ConsentCheckRow(
-            text: "I agree to processing of my personal data for providing me Couch app functions. See more in [Privacy Policy](https://example.com).",
+            text: "I agree to processing of my practice data on-device so Couch can personalise feedback.",
             isChecked: false,
             action: {}
         )

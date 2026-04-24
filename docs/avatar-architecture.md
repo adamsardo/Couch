@@ -28,7 +28,7 @@ Student on Couch iOS
 | Component | Code | Responsibility |
 |---|---|---|
 | Token server | [`backend/src/token-server.ts`](../backend/src/token-server.ts) | Authenticates the client, mints a LiveKit token, writes dispatch metadata for the agent, and tells the client whether to expect avatar video. |
-| LiveKit agent | [`backend/src/agent.ts`](../backend/src/agent.ts) | Registers as `couch-marcus-agent`. Starts the LemonSlice avatar session first, then starts the voice session. If the avatar doesn't join within `COUCH_AVATAR_START_TIMEOUT_SECONDS`, continues audio-only. |
+| LiveKit agent | [`backend/src/agent.ts`](../backend/src/agent.ts) | Registers as `couch-marcus-agent`. Connects to the room, attempts to start the LemonSlice avatar session, then starts the voice session. If the avatar doesn't join within `COUCH_AVATAR_START_TIMEOUT_SECONDS`, continues audio-only. |
 | Scenario config | [`backend/src/config/scenarios.ts`](../backend/src/config/scenarios.ts) | Single source of truth for scenario id → persona prompt → agent name → avatar provider identity. Lets us swap LemonSlice agent / image without shipping a client build. |
 | iOS driver seam | [`Couch/Services/Session/ConversationDriver.swift`](../Couch/Services/Session/ConversationDriver.swift) | Transport-agnostic interface the session coordinator drives. |
 | iOS LiveKit driver | [`Couch/Services/Session/LiveKitConversationDriver.swift`](../Couch/Services/Session/LiveKitConversationDriver.swift) | Fetches the token, connects the room, publishes the mic, forwards transcriptions, and exposes the remote avatar video track. |
@@ -40,7 +40,7 @@ Student on Couch iOS
 
 The pipeline is structured so a session never hard-fails because of avatars:
 
-1. Backend agent tries to start LemonSlice. If the API key is missing or credentials time out, the agent logs a warning and continues audio-only.
+1. Backend agent connects to LiveKit, then tries to start LemonSlice. If the API key is missing or credentials time out, the agent logs a warning and continues audio-only.
 2. Token server still reports `session.avatar.enabled = false` when it knows the provider isn't configured; the iOS client uses that signal to show the subtle "Audio-only session" hint instead of waiting for a video that isn't coming.
 3. iOS `LiveKitConversationDriver` never requires a video track to mark the session `.live` — it only flips `shouldShowVideoUnavailableHint` and keeps the static `ScenarioPortraitView` on screen.
 4. If `COUCH_LIVEKIT_ENABLED` is off (or the backend URL isn't configured), the `SessionCoordinator` falls back to the legacy `ElevenLabsConversationDriver`. No shipped-build change is required.

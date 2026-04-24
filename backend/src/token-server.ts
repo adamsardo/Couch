@@ -8,6 +8,12 @@ import { z } from 'zod';
 
 import { env } from './config/env.js';
 import {
+  DebriefGenerationError,
+  DebriefRequestSchema,
+  generateDebrief,
+  type FetchLike,
+} from './debrief.js';
+import {
   resolveAvatarConfig,
   scenarioConfig,
   ScenarioLookupError,
@@ -29,8 +35,13 @@ const TokenRequest = z.object({
  * client expects (`serverUrl`, `participantToken`) plus a small `session`
  * block Couch uses to configure the iOS stage (e.g. whether to expect video).
  */
-export async function buildApp() {
+export interface BuildAppOptions {
+  openaiFetch?: FetchLike;
+}
+
+export async function buildApp(options: BuildAppOptions = {}) {
   const e = env();
+  const openaiFetch = options.openaiFetch ?? (globalThis.fetch as unknown as FetchLike);
   const app = Fastify({
     logger: { level: e.LOG_LEVEL },
     trustProxy: true,
@@ -118,6 +129,45 @@ export async function buildApp() {
         },
       },
     };
+  });
+
+  app.post('/v1/debriefs', async (req, reply) => {
+    const auth = req.headers['x-couch-auth'];
+    if (typeof auth !== 'string' || auth !== e.COUCH_API_SHARED_SECRET) {
+      reply.code(401);
+      return { error: 'unauthorized' };
+    }
+
+    const parsed = DebriefRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      reply.code(400);
+      return { error: 'bad_request', issues: parsed.error.issues };
+    }
+
+    req.log.info(
+      {
+        scenarioId: parsed.data.scenario.id,
+        turnCount: parsed.data.turns.length,
+      },
+      'generating debrief',
+    );
+
+    try {
+      return await generateDebrief({
+        request: parsed.data,
+        apiKey: e.OPENAI_API_KEY,
+        fetchImpl: openaiFetch,
+      });
+    } catch (err) {
+      if (err instanceof DebriefGenerationError) {
+        req.log.error({ status: err.status }, 'OpenAI debrief request failed');
+        reply.code(502);
+        return { error: 'debrief_generation_failed', status: err.status };
+      }
+      req.log.error(err, 'debrief generation failed');
+      reply.code(502);
+      return { error: 'debrief_generation_failed' };
+    }
   });
 
   return app;

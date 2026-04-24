@@ -74,16 +74,11 @@ struct CalendarStripView: View {
     }
 
     private func letter(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.dateFormat = "EEEEE" // single-letter weekday
-        return formatter.string(from: date).uppercased()
+        date.formatted(.dateTime.weekday(.narrow)).uppercased()
     }
 
     private func accessibility(for day: Day) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .full
-        let name = formatter.string(from: day.date)
+        let name = day.date.formatted(.dateTime.weekday(.wide).month(.wide).day().year())
         if day.isActive { return "\(name), rep completed" }
         if day.isToday { return "\(name), today" }
         return "\(name), no rep" + (day.isFuture ? " yet" : "")

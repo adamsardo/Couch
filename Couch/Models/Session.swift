@@ -3,6 +3,7 @@ import SwiftData
 
 enum SessionStatus: String, Codable, Sendable {
     case inProgress
+    case awaitingDebrief
     case completed
     case abandoned
 }

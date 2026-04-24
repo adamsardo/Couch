@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 struct HistoryView: View {
-    @Query(sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
+    @Query(filter: #Predicate<Session> { $0.statusRaw == "completed" }, sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
     @Query(sort: \StreakEvent.day, order: .reverse) private var streakEvents: [StreakEvent]
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -13,7 +13,7 @@ struct HistoryView: View {
     private var streakDays: Int { StreakCounter.consecutiveDays(events: streakEvents) }
 
     private var completedSessions: [Session] {
-        sessions.filter { $0.status == .completed }
+        sessions
     }
 
     private var filteredSessions: [Session] {

@@ -30,11 +30,9 @@ final class CouchUITests: XCTestCase {
         XCTAssertTrue(continueButton.isEnabled)
         continueButton.tap()
 
-        // The next screen (privacy or similar) should be visible.
-        // We check simply that the Continue button is still reachable
-        // on whatever the next step is.
-        XCTAssertTrue(app.buttons["Continue"].waitForExistence(timeout: 3)
-            || app.buttons.firstMatch.waitForExistence(timeout: 3))
+        XCTAssertTrue(app.descendants(matching: .any)["privacy-policy-link"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.descendants(matching: .any)["terms-of-use-link"].exists)
+        XCTAssertTrue(app.buttons["Continue"].exists)
     }
 
     @MainActor

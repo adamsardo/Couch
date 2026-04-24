@@ -10,7 +10,7 @@ struct HomeView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Scenario.createdAt) private var scenarios: [Scenario]
-    @Query(sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
+    @Query(filter: #Predicate<Session> { $0.statusRaw == "completed" }, sort: \Session.startedAt, order: .reverse) private var sessions: [Session]
     @Query(sort: \StreakEvent.day, order: .reverse) private var streakEvents: [StreakEvent]
 
     @State private var presentedScenario: Scenario?
@@ -22,7 +22,7 @@ struct HomeView: View {
     }
 
     private var lastCompletedSession: Session? {
-        sessions.first(where: { $0.status == .completed && $0.debrief != nil })
+        sessions.first(where: { $0.debrief?.isComplete == true })
     }
 
     private var lastDebrief: Debrief? { lastCompletedSession?.debrief }
@@ -32,7 +32,7 @@ struct HomeView: View {
         guard let start = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: .now)) else {
             return 0
         }
-        return sessions.filter { $0.status == .completed && $0.startedAt >= start }.count
+        return sessions.filter { $0.startedAt >= start }.count
     }
 
     private var streakDays: Int { StreakCounter.consecutiveDays(events: streakEvents) }
@@ -150,9 +150,7 @@ struct HomeView: View {
     }
 
     private var greetingEyebrow: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE"
-        return formatter.string(from: .now).uppercased()
+        Date.now.formatted(.dateTime.weekday(.wide)).uppercased()
     }
 
     private var greetingHeadline: String {

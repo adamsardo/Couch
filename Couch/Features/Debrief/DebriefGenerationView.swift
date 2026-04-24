@@ -45,7 +45,7 @@ struct DebriefGenerationView: View {
                     .padding(.horizontal, CouchTheme.Spacing.lg)
             }
 
-            PersonalisingLoader(phases: phases, onFinished: {})
+            PersonalisingLoader(phases: phases, repeats: true, onFinished: {})
                 .padding(.horizontal, CouchTheme.Spacing.lg)
 
             Spacer(minLength: 0)

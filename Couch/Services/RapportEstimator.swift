@@ -18,6 +18,12 @@ nonisolated struct RapportEstimator: Sendable {
         return Int(score.rounded())
     }
 
+    func update(current score: Int, with turn: RapportTurn) -> Int {
+        guard turn.role == .user else { return score }
+        let updated = Double(score) + Self.delta(for: turn.text.lowercased())
+        return Int(min(100, max(0, updated)).rounded())
+    }
+
     private static func delta(for text: String) -> Double {
         var d: Double = 0
         for token in Self.positiveTokens where text.contains(token) {

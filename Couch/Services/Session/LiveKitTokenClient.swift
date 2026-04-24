@@ -65,14 +65,20 @@ actor LiveKitTokenClient {
 
     /// POSTs a token request and returns the parsed response.
     func fetchToken(for request: LiveKitTokenRequest) async throws -> LiveKitTokenResponse {
+        let started = ContinuousClock.now
         let endpoint = baseURL.appendingPathComponent("v1/sessions/token")
         var urlRequest = URLRequest(url: endpoint)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue(sharedSecret, forHTTPHeaderField: "X-Couch-Auth")
         urlRequest.httpBody = try JSONEncoder().encode(request)
+        urlRequest.timeoutInterval = 20
 
         let (data, response) = try await session.data(for: urlRequest)
+        let duration = started.duration(to: .now)
+        let elapsedMs = duration.components.seconds * 1_000
+            + duration.components.attoseconds / 1_000_000_000_000_000
+        Logger.session.info("LiveKit token request completed in \(elapsedMs, privacy: .public)ms")
         guard let http = response as? HTTPURLResponse else {
             throw LiveKitTokenClientError.invalidResponse
         }

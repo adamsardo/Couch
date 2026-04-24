@@ -3,6 +3,7 @@ import Testing
 @testable import Couch
 
 @Suite("Conversation driver contract")
+@MainActor
 struct ConversationDriverTests {
     @Test
     func driverEventsAreEquatable() {

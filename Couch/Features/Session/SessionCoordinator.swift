@@ -59,6 +59,8 @@ final class SessionCoordinator {
     // participate in `@Observable` tracking.
     @ObservationIgnored private var eventTask: Task<Void, Never>?
     @ObservationIgnored private var timerTask: Task<Void, Never>?
+    @ObservationIgnored private var persistenceFlushTask: Task<Void, Never>?
+    @ObservationIgnored private var pendingPersistenceTurns: [PendingPersistentTurn] = []
     private var sessionID: PersistentIdentifier?
     private var startedAt: Date?
     /// Last rapport score we fired a milestone haptic for. Monotonically
@@ -94,6 +96,7 @@ final class SessionCoordinator {
     deinit {
         eventTask?.cancel()
         timerTask?.cancel()
+        persistenceFlushTask?.cancel()
     }
 
     var snapshot: SessionSnapshot {
@@ -130,6 +133,16 @@ final class SessionCoordinator {
             CouchHaptics.sessionStart()
         } catch {
             Logger.session.error("driver.start failed: \(error.localizedDescription, privacy: .public)")
+            timerTask?.cancel()
+            timerTask = nil
+            if let sessionID {
+                try? await store.finishSession(
+                    sessionID: sessionID,
+                    endedAt: .now,
+                    status: .abandoned,
+                    rapportFinal: rapportScore
+                )
+            }
             phase = .error(error.localizedDescription)
         }
     }
@@ -149,11 +162,12 @@ final class SessionCoordinator {
         timerTask?.cancel()
         timerTask = nil
         await driver?.end()
+        await flushPendingTurns()
         if let sessionID {
             try? await store.finishSession(
                 sessionID: sessionID,
                 endedAt: .now,
-                status: .completed,
+                status: .awaitingDebrief,
                 rapportFinal: rapportScore
             )
         }
@@ -257,9 +271,10 @@ final class SessionCoordinator {
             createdAt: turn.createdAt
         )
         visibleTurns.append(display)
-        let updatedRapport = estimator.estimate(turns: visibleTurns.map {
-            RapportTurn(role: $0.role, text: $0.text)
-        })
+        let updatedRapport = estimator.update(
+            current: rapportScore,
+            with: RapportTurn(role: turn.role, text: turn.text)
+        )
         if updatedRapport > rapportScore {
             let milestones = [50, 70, 90]
             for milestone in milestones where updatedRapport >= milestone && rapportScore < milestone && lastRapportMilestone < milestone {
@@ -269,15 +284,35 @@ final class SessionCoordinator {
         }
         rapportScore = updatedRapport
         if let sessionID {
-            let snapshot = turn
-            Task { [store] in
-                _ = try? await store.appendTurn(
-                    sessionID: sessionID,
-                    role: snapshot.role,
-                    text: snapshot.text,
-                    createdAt: snapshot.createdAt
-                )
-            }
+            pendingPersistenceTurns.append(PendingPersistentTurn(
+                role: turn.role,
+                text: turn.text,
+                createdAt: turn.createdAt
+            ))
+            schedulePersistenceFlush(sessionID: sessionID)
+        }
+    }
+
+    private func schedulePersistenceFlush(sessionID: PersistentIdentifier) {
+        guard persistenceFlushTask == nil else { return }
+        persistenceFlushTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(750))
+            guard let self else { return }
+            await self.flushPendingTurns(sessionID: sessionID)
+        }
+    }
+
+    private func flushPendingTurns(sessionID explicitSessionID: PersistentIdentifier? = nil) async {
+        persistenceFlushTask?.cancel()
+        persistenceFlushTask = nil
+        guard !pendingPersistenceTurns.isEmpty else { return }
+        guard let resolvedSessionID = explicitSessionID ?? self.sessionID else { return }
+        let turns = pendingPersistenceTurns
+        pendingPersistenceTurns.removeAll(keepingCapacity: true)
+        do {
+            try await store.appendTurns(sessionID: resolvedSessionID, turns: turns)
+        } catch {
+            Logger.session.error("Transcript batch persist failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -326,5 +361,9 @@ enum ProfileParticipantIdentityResolver {
         let fresh = "student-\(UUID().uuidString.lowercased().prefix(12))"
         defaults.set(fresh, forKey: installIdentityKey)
         return fresh
+    }
+
+    static func resetIdentity() {
+        UserDefaults.standard.removeObject(forKey: installIdentityKey)
     }
 }

@@ -42,6 +42,8 @@ final class LiveKitConversationDriver: NSObject, ConversationDriver {
 
     /// Transcription segment ids we've already forwarded.
     private var seenTranscriptionIDs: Set<String> = []
+    private var hasLoggedFirstTranscript = false
+    private var hasLoggedFirstAgentAudio = false
 
     init(tokenClient: LiveKitTokenClient, context: Context) {
         self.tokenClient = tokenClient
@@ -60,6 +62,7 @@ final class LiveKitConversationDriver: NSObject, ConversationDriver {
 
     func start() async throws {
         continuation.yield(.phaseChanged(.connecting))
+        let started = ContinuousClock.now
         do {
             let request = LiveKitTokenRequest(
                 scenarioID: context.scenarioID,
@@ -70,18 +73,28 @@ final class LiveKitConversationDriver: NSObject, ConversationDriver {
             let tokenResponse = try await tokenClient.fetchToken(for: request)
             self.serverAvatarHint = tokenResponse.session.avatar
 
+            let connectStarted = ContinuousClock.now
             try await room.connect(
                 url: tokenResponse.serverUrl,
                 token: tokenResponse.participantToken
             )
+            let connectDuration = connectStarted.duration(to: .now)
+            let connectElapsedMs = connectDuration.components.seconds * 1_000
+                + connectDuration.components.attoseconds / 1_000_000_000_000_000
+            Logger.session.info("LiveKit room connect completed in \(connectElapsedMs, privacy: .public)ms")
 
             // Publish the student's microphone for voice mode. For text mode
             // we keep the mic disabled so no audio leaves the device.
             try await room.localParticipant.setMicrophone(enabled: context.mode == .voice)
 
             continuation.yield(.phaseChanged(.live))
+            let totalDuration = started.duration(to: .now)
+            let totalElapsedMs = totalDuration.components.seconds * 1_000
+                + totalDuration.components.attoseconds / 1_000_000_000_000_000
+            Logger.session.info("LiveKit session marked live in \(totalElapsedMs, privacy: .public)ms")
 
             if let hint = serverAvatarHint, !hint.enabled {
+                Logger.session.info("LiveKit avatar disabled by backend")
                 continuation.yield(.avatarStartFailed("video_disabled_on_server"))
             }
         } catch {
@@ -150,6 +163,10 @@ final class LiveKitConversationDriver: NSObject, ConversationDriver {
         guard frame.final ?? true else { return }
         guard !seenTranscriptionIDs.contains(frame.id) else { return }
         seenTranscriptionIDs.insert(frame.id)
+        if !hasLoggedFirstTranscript {
+            hasLoggedFirstTranscript = true
+            Logger.session.info("LiveKit first transcript frame received")
+        }
         let role: TurnRole = frame.role == "user" ? .user : .agent
         continuation.yield(.newTurn(ConversationDriverTurn(
             id: UUID(),
@@ -198,6 +215,10 @@ extension LiveKitConversationDriver: RoomDelegate {
                     self.continuation.yield(.avatarVideoAvailabilityChanged(true))
                 }
             case .audio:
+                if !self.hasLoggedFirstAgentAudio {
+                    self.hasLoggedFirstAgentAudio = true
+                    Logger.session.info("LiveKit first remote audio subscribed")
+                }
                 self.continuation.yield(.agentModeChanged(.listening))
             default:
                 break

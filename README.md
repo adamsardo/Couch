@@ -80,14 +80,14 @@ Codepaths: `Couch/Features/Debrief/DebriefGateFlow.swift`, `Couch/Features/Debri
 
 1. `DebriefGateFlow` is presented full-screen and uses `interactiveDismissDisabled(true)` so the user cannot skip the post-session feedback flow.
 2. `DebriefCoordinator.generate()` renders the session snapshot into a transcript prompt and asks `DebriefService` for structured output.
-3. `DebriefService` calls the OpenAI Responses API with a strict JSON Schema named `couch_debrief`.
+3. `DebriefService` calls the Couch backend `POST /v1/debriefs` endpoint with the existing `DebriefPayload` shape. Debug builds can still fall back to the on-device OpenAI client when the backend URL/shared secret are not configured.
 4. The required payload shape is:
    - `strengths`: exactly 3 strings
    - `next_moves`: exactly 3 strings
    - `micro_drill`: `{ title, body }`
    - `notes`: optional-style context string, still required by schema
    - `risk_flags`: array of strings
-5. Once decoded, the app persists a `Debrief`, links it to the `Session`, and inserts a `StreakEvent` only if one does not already exist for the current calendar day.
+5. Once decoded, the app persists a `Debrief` and keeps the session in `awaitingDebrief` until the user completes the mandatory debrief. Only then does it mark the `Session` completed and insert a `StreakEvent` if one does not already exist for the current calendar day.
 6. The user then steps through strengths -> next moves -> micro-drill -> confidence checkpoint -> completion.
 
 Important constraints:
@@ -124,7 +124,7 @@ Copy `Couch/Secrets.plist.example` to `Couch/Secrets.plist` (gitignored) and fil
 
 | Key | Where to get it |
 |-----|-----------------|
-| `OPENAI_API_KEY` | <https://platform.openai.com/api-keys> — used for the post-session debrief |
+| `OPENAI_API_KEY` | <https://platform.openai.com/api-keys> — used by debug on-device debrief fallback only; production debriefs should go through the backend |
 | `ELEVENLABS_API_KEY` | Optional for the legacy transport. Only needed if you switch away from the current **public** Marcus agent flow and start minting private-agent conversation tokens. |
 | `MARCUS_AGENT_ID` | The agent ID from <https://elevenlabs.io/app/conversational-ai> for the Marcus persona (set as a **public** agent so the app can connect without a backend). Used only by the legacy direct transport. |
 | `COUCH_LIVEKIT_ENABLED` | `YES` to switch the app to the LiveKit transport (see [`backend/README.md`](backend/README.md)). Defaults off so legacy builds still work. |
@@ -136,7 +136,23 @@ Then add `Couch/Secrets.plist` to the **Couch** app target in Xcode (drag into t
 
 Alternatively, define `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, and `MARCUS_AGENT_ID` as scheme environment variables for ad-hoc local runs.
 
-> **V1 only.** Storing the OpenAI key on-device is fine for dev and TestFlight but **not** for App Store distribution. The current ElevenLabs integration uses a public agent ID, not an ElevenLabs API key. `ElevenLabsClient` is already the seam for introducing signed-URL or private-agent auth later without rewriting the session views.
+> **V1 only.** Storing the OpenAI key on-device is fine for local debug but **not** for App Store distribution. Production debrief generation should use the backend proxy. The current ElevenLabs integration uses a public agent ID, not an ElevenLabs API key. `ElevenLabsClient` is already the seam for introducing signed-URL or private-agent auth later without rewriting the session views.
+
+### Verification shortcut
+
+Run the iOS release/build preflight from the repo root:
+
+```sh
+sh scripts/verify-ios.sh
+```
+
+The script sets `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer` when needed, checks bundle ID/orientation/legal-link build settings, lists simulators, builds the app, and runs focused unit/UI tests against `DESTINATION` (default: `platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5`).
+
+If SwiftPM dependency resolution reports stale package working-copy errors under DerivedData, clear only this project’s package cache before rerunning:
+
+```sh
+rm -rf ~/Library/Developer/Xcode/DerivedData/Couch-*/SourcePackages
+```
 
 ### 3. Configure the Marcus agent
 

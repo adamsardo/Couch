@@ -10,9 +10,24 @@ nonisolated struct DebriefService: Sendable {
         scenario: ScenarioSnapshot,
         turns: [TurnSnapshot]
     ) async throws -> DebriefPayload {
+        if let backend = DebriefAPIClient.resolved() {
+            return try await backend.generate(scenario: scenario, turns: turns)
+        }
+
+#if DEBUG
+        return try await generateDirectly(scenario: scenario, turns: turns)
+#else
+        throw DebriefAPIError.backendNotConfigured
+#endif
+    }
+
+    private func generateDirectly(
+        scenario: ScenarioSnapshot,
+        turns: [TurnSnapshot]
+    ) async throws -> DebriefPayload {
         let instructions = Self.systemPrompt
         let input = Self.renderInput(scenario: scenario, turns: turns)
-        Logger.debrief.info("Generating debrief for \(turns.count, privacy: .public) turns")
+        Logger.debrief.info("Generating local debug debrief for \(turns.count, privacy: .public) turns")
         return try await OpenAIClient.shared.generate(
             model: modelName,
             instructions: instructions,
@@ -119,7 +134,7 @@ nonisolated struct MicroDrillPayload: Codable, Sendable, Equatable {
     var body: String
 }
 
-nonisolated struct ScenarioSnapshot: Sendable, Equatable {
+nonisolated struct ScenarioSnapshot: Codable, Sendable, Equatable {
     let id: String
     let title: String
     let patientName: String
@@ -127,7 +142,7 @@ nonisolated struct ScenarioSnapshot: Sendable, Equatable {
     let summary: String
 }
 
-nonisolated struct TurnSnapshot: Sendable, Equatable {
+nonisolated struct TurnSnapshot: Codable, Sendable, Equatable {
     let role: TurnRole
     let text: String
 }

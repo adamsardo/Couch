@@ -26,6 +26,21 @@ actor TranscriptStore {
         return turn.persistentModelID
     }
 
+    func appendTurns(
+        sessionID: PersistentIdentifier,
+        turns: [PendingPersistentTurn]
+    ) throws {
+        guard !turns.isEmpty else { return }
+        guard let session = self[sessionID, as: Session.self] else {
+            throw TranscriptStoreError.sessionNotFound
+        }
+        for item in turns {
+            let turn = Turn(role: item.role, text: item.text, createdAt: item.createdAt, session: session)
+            modelContext.insert(turn)
+        }
+        try modelContext.save()
+    }
+
     /// Mark a session ended and persist its final state.
     func finishSession(
         sessionID: PersistentIdentifier,
@@ -45,4 +60,10 @@ actor TranscriptStore {
 
 enum TranscriptStoreError: Error {
     case sessionNotFound
+}
+
+nonisolated struct PendingPersistentTurn: Sendable {
+    let role: TurnRole
+    let text: String
+    let createdAt: Date
 }

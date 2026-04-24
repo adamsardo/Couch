@@ -7,6 +7,8 @@ struct PrivacyConsentView: View {
     @State private var dataProcessing = false
     @State private var termsAccepted = false
 
+    private let legalLinks = LegalLinks.current
+
     var body: some View {
         VStack(spacing: CouchTheme.Spacing.lg) {
             hero
@@ -25,15 +27,26 @@ struct PrivacyConsentView: View {
                         action: { notTherapy.toggle() }
                     )
                     ConsentCheckRow(
-                        text: "I agree to processing of my practice data on-device so Couch can personalise feedback. See more in [Privacy Policy](https://example.com/privacy).",
+                        text: "I agree to processing of my practice data on-device so Couch can personalise feedback.",
                         isChecked: dataProcessing,
                         action: { dataProcessing.toggle() }
                     )
                     ConsentCheckRow(
-                        text: "I agree to the [Privacy Policy](https://example.com/privacy) and [Terms of Use](https://example.com/terms).",
+                        text: "I agree to the Privacy Policy and Terms of Use.",
                         isChecked: termsAccepted,
                         action: { termsAccepted.toggle() }
                     )
+                    HStack(spacing: CouchTheme.Spacing.sm) {
+                        Link("Privacy Policy", destination: legalLinks.privacyPolicy)
+                            .accessibilityIdentifier("privacy-policy-link")
+                        Text("·")
+                            .foregroundStyle(CouchTheme.textMuted)
+                        Link("Terms of Use", destination: legalLinks.termsOfUse)
+                            .accessibilityIdentifier("terms-of-use-link")
+                    }
+                    .font(CouchTheme.Typography.caption.weight(.semibold))
+                    .tint(CouchTheme.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
 

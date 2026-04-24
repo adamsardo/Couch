@@ -148,17 +148,16 @@ export default defineAgent({
       tts: buildTTS(scenario),
     });
 
-    // Try to start the avatar first (LemonSlice docs: start the avatar, then
-    // start the user-facing agent session). If it fails, we continue audio-
-    // only, which is the PRD-required fallback.
+    await ctx.connect();
+
+    // Try to start the avatar before the user-facing agent session. If it fails,
+    // we continue audio-only, which is the PRD-required fallback.
     await maybeStartAvatar(session, ctx, scenario);
 
     await session.start({
       agent: new voice.Agent({ instructions: scenario.persona.systemPrompt }),
       room: ctx.room,
     });
-
-    await ctx.connect();
 
     logger.info({ scenarioId: scenario.id, mode: meta.mode }, 'session ready');
   },

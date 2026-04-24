@@ -48,7 +48,10 @@ struct DebriefGateFlow: View {
                     coordinator: coordinator,
                     payload: payload,
                     snapshot: snapshot,
-                    onComplete: onComplete
+                    onComplete: {
+                        coordinator.completeDebrief()
+                        onComplete()
+                    }
                 )
             }
         }
